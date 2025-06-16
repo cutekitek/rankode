@@ -1,0 +1,767 @@
+basePath: /api
+definitions:
+  apierror.Api:
+    properties:
+      error:
+        type: string
+    type: object
+  apierror.ApiError:
+    properties:
+      code:
+        type: integer
+      error: {}
+    type: object
+  db.GetUsersLeaderboardRow:
+    properties:
+      elo:
+        type: integer
+      username:
+        type: string
+    type: object
+  db.Task:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      description:
+        type: string
+      difficulty:
+        type: integer
+      id:
+        type: integer
+      passes:
+        type: integer
+      score:
+        type: number
+      title:
+        type: string
+      topics:
+        items:
+          type: integer
+        type: array
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      user_id:
+        type: integer
+    type: object
+  db.TaskTestCase:
+    properties:
+      case_order:
+        type: integer
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      id:
+        type: integer
+      input_file:
+        type: string
+      output_file:
+        type: string
+      task_id:
+        type: integer
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+    type: object
+  db.Topic:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      id:
+        type: integer
+      name:
+        type: string
+      tasks_count:
+        type: integer
+    type: object
+  db.UpdateTaskParams:
+    properties:
+      description:
+        type: string
+      difficulty:
+        type: integer
+      id:
+        type: integer
+      passes:
+        type: integer
+      score:
+        type: number
+      title:
+        type: string
+      topics:
+        items:
+          type: integer
+        type: array
+    type: object
+  db.User:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      elo:
+        type: integer
+      email:
+        type: string
+      id:
+        type: integer
+      password_hash:
+        type: string
+      roles:
+        type: integer
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      username:
+        type: string
+    type: object
+  models.AuthUserDTO:
+    properties:
+      identifier:
+        type: string
+      password:
+        type: string
+    required:
+    - identifier
+    - password
+    type: object
+  models.CreateAttemptRequest:
+    properties:
+      code:
+        type: string
+      lang:
+        type: string
+      task_id:
+        type: integer
+    type: object
+  models.CreateTaskDTO:
+    properties:
+      description:
+        type: string
+      difficulty:
+        type: integer
+      title:
+        type: string
+      topics:
+        items:
+          type: integer
+        type: array
+    type: object
+  models.CreateUserDTO:
+    properties:
+      email:
+        type: string
+      password:
+        description: Basic validation example
+        minLength: 8
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  models.GetUserTaskAttemptsResponse:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      lang:
+        type: string
+      memory_usage:
+        type: integer
+      running_time:
+        type: integer
+      status:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.NewTestCaseReq:
+    properties:
+      task_id:
+        type: integer
+    type: object
+  models.TaskByIdResponse:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      description:
+        type: string
+      difficulty:
+        type: integer
+      id:
+        type: integer
+      passes:
+        type: integer
+      score:
+        type: number
+      test_cases:
+        items:
+          $ref: '#/definitions/db.TaskTestCase'
+        type: array
+      title:
+        type: string
+      topics:
+        items:
+          type: integer
+        type: array
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      user_id:
+        type: integer
+    type: object
+  pgtype.InfinityModifier:
+    enum:
+    - 1
+    - 0
+    - -1
+    type: integer
+    x-enum-varnames:
+    - Infinity
+    - Finite
+    - NegativeInfinity
+  pgtype.Timestamp:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
+        description: Time zone will be ignored when encoding to PostgreSQL.
+        type: string
+      valid:
+        type: boolean
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:4000
+info:
+  contact: {}
+  title: Rankode
+  version: "1.0"
+paths:
+  /attempts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all attempts submitted by the authenticated user for
+        a given task.
+      parameters:
+      - description: Task ID
+        in: query
+        name: taskId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of attempts
+          schema:
+            items:
+              $ref: '#/definitions/models.GetUserTaskAttemptsResponse'
+            type: array
+        "400":
+          description: Bad request (e.g., missing or invalid taskId)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      security:
+      - ApiKeyAuoth: []
+      summary: List user’s attempts for a specific task
+      tags:
+      - Attempts
+    post:
+      consumes:
+      - application/json
+      description: Submits a new code attempt for execution against a task’s test
+        cases.
+      parameters:
+      - description: Attempt creation payload
+        in: body
+        name: attempt
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAttemptRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Attempt queued successfully
+        "400":
+          description: Bad request (e.g., still running or invalid input)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new attempt
+      tags:
+      - Attempts
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user with email/username and password and returns
+        a JWT upon success.
+      parameters:
+      - description: Authentication credentials payload
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.AuthUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authentication successful, returns JWT
+          schema:
+            properties:
+              token:
+                type: string
+            type: object
+        "400":
+          description: Bad request (e.g., invalid input)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized (invalid credentials)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      summary: Authenticate user and get token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user with a username, email, and password.
+      parameters:
+      - description: User registration payload
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully (sensitive data omitted)" // Adjust
+            response type based on actual return
+          schema:
+            $ref: '#/definitions/db.User'
+        "400":
+          description: Bad request (e.g., invalid input, user already exists)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierror.Api'
+      summary: Register a new user
+      tags:
+      - Auth
+  /leaderboard:
+    get:
+      consumes:
+      - application/json
+      description: Users leaderboard
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              $ref: '#/definitions/db.GetUsersLeaderboardRow'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      summary: Users leaderboard
+      tags:
+      - Users
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of tasks based on optional filters.
+      parameters:
+      - description: Filter by title
+        in: query
+        name: title
+        type: string
+      - collectionFormat: csv
+        description: Filter by topic IDs
+        in: query
+        items:
+          type: integer
+        name: topics
+        type: array
+      - collectionFormat: csv
+        description: Filter by difficulty levels
+        in: query
+        items:
+          type: integer
+        name: difficulties
+        type: array
+      - description: Sort order (e.g., name, difficulty, score)
+        enum:
+        - name
+        - difficulty
+        - score
+        in: query
+        name: sort
+        type: string
+      - default: 10
+        description: Number of tasks to return
+        in: query
+        maximum: 25
+        minimum: 10
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of tasks to skip
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of tasks
+          schema:
+            items:
+              $ref: '#/definitions/db.Task'
+            type: array
+        "400":
+          description: Bad request (e.g., invalid query parameters)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      summary: List tasks
+      tags:
+      - Tasks
+    post:
+      consumes:
+      - application/json
+      description: Creates a new task with the provided details.
+      parameters:
+      - description: Task creation payload
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTaskDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully cЗreated task
+          schema:
+            $ref: '#/definitions/db.Task'
+        "400":
+          description: Bad request (e.g., invalid input, topic not found)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new task
+      tags:
+      - Tasks
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a task by ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Task deleted successfully
+        "400":
+          description: Bad request (invalid ID format)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete task
+      tags:
+      - Tasks
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a single task by its ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task details
+          schema:
+            $ref: '#/definitions/models.TaskByIdResponse'
+        "400":
+          description: Bad request (invalid ID format)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      summary: Get task by ID
+      tags:
+      - Tasks
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing task's details by ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Task update payload
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/db.UpdateTaskParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task updated successfully
+        "400":
+          description: Bad request (invalid input, ID format)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      security:
+      - ApiKeyAuth: []
+      summary: Update task
+      tags:
+      - Tasks
+  /test-cases:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new test case for a task
+      parameters:
+      - description: Test case payload
+        in: body
+        name: testCase
+        required: true
+        schema:
+          $ref: '#/definitions/models.NewTestCaseReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created test case
+          schema:
+            $ref: '#/definitions/db.TaskTestCase'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new test case
+      tags:
+      - TestCases
+  /test-cases/{id}/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads input/output file for a test case
+      parameters:
+      - description: Test Case ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Upload type
+        in: query
+        name: type
+        required: true
+        type: string
+      - description: Test case file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File uploaded successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload test case file
+      tags:
+      - TestCases
+  /topics:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of tasks based on optional filters.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of topics
+          schema:
+            items:
+              $ref: '#/definitions/db.Topic'
+            type: array
+        "400":
+          description: Bad request (e.g., invalid query parameters)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      summary: List tasks
+      tags:
+      - Topics
+    post:
+      consumes:
+      - application/json
+      description: Adds new topic by its alias
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created Topic
+          schema:
+            $ref: '#/definitions/db.Topic'
+        "400":
+          description: Bad request (e.g., invalid query parameters)
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apierror.ApiError'
+      summary: Add Topics
+      tags:
+      - Topics
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
