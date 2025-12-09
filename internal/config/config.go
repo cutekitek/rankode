@@ -11,10 +11,10 @@ import (
 
 type Config struct {
 	PostgresString string `env:"POSTGRES_DBSTRING" env-required:"true"`
-	MinIOHost string `env:"MINIO_HOST" env-default:"127.0.0.1:9000"`
+	MinIOHost string `env:"MINIO_HOST" env-required:"true"`
 	MinIOLogin string `env:"MINIO_LOGIN" env-required:"true"`
 	MinIOPassword string `env:"MINIO_PASSWORD" env-required:"true"`
-	RabbitMQHost     string `env:"RABBIT_HOST" env-default:"127.0.0.1"`
+	RabbitMQHost     string `env:"RABBIT_HOST" env-required:"true"`
 	RabbitMQPort     int `env:"RABBIT_PORT" env-default:"5672"`
 	RabbitMQLogin    string `env:"RABBIT_USER" env-required:"true"`
 	RabbitMQPassword string `env:"RABBIT_PASSWORD" env-required:"true"`

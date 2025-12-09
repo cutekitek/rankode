@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	reqQueue  = "tasks-req"
-	respQueue = "task-resp"
+	reqQueue  = "rankode-req"
+	respQueue = "rankode-resp"
 )
 
 type TasksValidator interface {

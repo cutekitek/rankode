@@ -7,7 +7,7 @@ export const useApi = () => {
   const {token} = useAuth();
   const apis = useMemo(() => {
     const config = new Configuration({
-      basePath: "https://rankode.tech/api",
+      basePath:"http://rankode.tech/api",
       headers: token ? {
         "Authorization": `Bearer ${token}`
       }: undefined,

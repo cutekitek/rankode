@@ -27,7 +27,7 @@ type UploadFileParams struct {
 }
 
 func NewFileStorage(cfg *config.Config) *FileStorage {
-	client, err := minio.New("127.0.0.1:9000", &minio.Options{
+	client, err := minio.New(cfg.MinIOHost, &minio.Options{
 		Creds: credentials.NewStaticV4(cfg.MinIOLogin, cfg.MinIOPassword, ""),
 	})
 	if err != nil{
