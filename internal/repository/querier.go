@@ -6,21 +6,55 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	AddStudentToGroup(ctx context.Context, arg AddStudentToGroupParams) error
+	AddTaskToAssignment(ctx context.Context, arg AddTaskToAssignmentParams) error
 	BanUser(ctx context.Context, id int32) error
 	CheckFirstSuccessfulAttempt(ctx context.Context, arg CheckFirstSuccessfulAttemptParams) (bool, error)
+	CheckIfEnrolled(ctx context.Context, arg CheckIfEnrolledParams) (bool, error)
+	CountAssignmentSubmissions(ctx context.Context, dollar_1 int32) (int64, error)
+	CountStudentsInCourse(ctx context.Context, courseID int32) (int64, error)
+	CountStudentsWhoFinishedAssignment(ctx context.Context, dollar_1 int32) (int64, error)
+	CountStudentsWhoStartedAssignment(ctx context.Context, dollar_1 int32) (int64, error)
+	CountTasksInAssignment(ctx context.Context, assignmentID int32) (int64, error)
+	CreateAssignment(ctx context.Context, arg CreateAssignmentParams) (Assignment, error)
 	CreateAttempt(ctx context.Context, arg CreateAttemptParams) (Attempt, error)
+	CreateCourse(ctx context.Context, arg CreateCourseParams) (Course, error)
+	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
+	CreateOrUpdateGrade(ctx context.Context, arg CreateOrUpdateGradeParams) (Grade, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateTaskTestCase(ctx context.Context, arg CreateTaskTestCaseParams) (TaskTestCase, error)
 	CreateTopic(ctx context.Context, name string) (Topic, error)
+	DeleteAssignment(ctx context.Context, id int32) error
+	DeleteCourse(ctx context.Context, arg DeleteCourseParams) error
+	DeleteGrade(ctx context.Context, id int32) error
+	DeleteGroup(ctx context.Context, id int32) error
 	DeleteTask(ctx context.Context, id int32) error
 	DeleteTaskTestCase(ctx context.Context, arg DeleteTaskTestCaseParams) error
 	DeleteTopic(ctx context.Context, name string) error
+	EnrollStudent(ctx context.Context, arg EnrollStudentParams) error
+	GetAssignmentByID(ctx context.Context, id int32) (Assignment, error)
+	GetAssignmentForTask(ctx context.Context, taskID int32) (Assignment, error)
+	GetAssignmentWithTasks(ctx context.Context, id int32) (GetAssignmentWithTasksRow, error)
 	GetAttemptById(ctx context.Context, id int64) (Attempt, error)
+	GetAverageGradeForAssignment(ctx context.Context, assignmentID int32) (pgtype.Numeric, error)
+	GetCourseByID(ctx context.Context, id int32) (Course, error)
+	GetCourseByJoinCode(ctx context.Context, joinCode string) (Course, error)
+	GetCourseWithStats(ctx context.Context, id int32) (GetCourseWithStatsRow, error)
+	GetEnrollment(ctx context.Context, arg GetEnrollmentParams) (Enrollment, error)
+	GetGrade(ctx context.Context, arg GetGradeParams) (Grade, error)
+	GetGradesForAssignment(ctx context.Context, assignmentID int32) ([]GetGradesForAssignmentRow, error)
+	GetGroupByID(ctx context.Context, id int32) (Group, error)
+	GetGroupsForStudent(ctx context.Context, arg GetGroupsForStudentParams) ([]Group, error)
+	GetStudentGradesForAssignment(ctx context.Context, arg GetStudentGradesForAssignmentParams) ([]GetStudentGradesForAssignmentRow, error)
+	GetStudentGradesForCourse(ctx context.Context, arg GetStudentGradesForCourseParams) ([]GetStudentGradesForCourseRow, error)
 	GetTaskById(ctx context.Context, id int32) (Task, error)
 	GetTaskTestCases(ctx context.Context, taskID int32) ([]TaskTestCase, error)
+	GetTasksForAssignment(ctx context.Context, assignmentID int32) ([]GetTasksForAssignmentRow, error)
 	GetTestCaseByID(ctx context.Context, id int64) (TaskTestCase, error)
 	GetUserAttemptsByTask(ctx context.Context, arg GetUserAttemptsByTaskParams) ([]Attempt, error)
 	GetUserById(ctx context.Context, id int32) (User, error)
@@ -29,14 +63,30 @@ type Querier interface {
 	IncreaseTaskPasses(ctx context.Context, id int32) error
 	IncreaseUserElo(ctx context.Context, arg IncreaseUserEloParams) error
 	LanguageExists(ctx context.Context, dollar_1 interface{}) (string, error)
+	ListAssignmentsByCourse(ctx context.Context, courseID int32) ([]Assignment, error)
+	ListAssignmentsForStudent(ctx context.Context, userID int32) ([]Assignment, error)
+	ListCoursesByTeacher(ctx context.Context, teacherID int32) ([]Course, error)
+	ListCoursesForStudent(ctx context.Context, userID int32) ([]Course, error)
+	ListGroupsByCourse(ctx context.Context, courseID int32) ([]Group, error)
 	ListLanguages(ctx context.Context) ([]string, error)
+	ListPublicTasks(ctx context.Context) ([]Task, error)
+	ListStudentsInCourse(ctx context.Context, courseID int32) ([]ListStudentsInCourseRow, error)
+	ListStudentsInGroup(ctx context.Context, groupID int32) ([]User, error)
 	ListTasks(ctx context.Context) ([]Task, error)
+	ListTasksByCourse(ctx context.Context, courseID pgtype.Int4) ([]Task, error)
 	ListTopics(ctx context.Context) ([]Topic, error)
 	ListTopicsByIDs(ctx context.Context, topicIds []int32) ([]Topic, error)
 	NewUser(ctx context.Context, arg NewUserParams) (User, error)
+	RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error
+	RemoveTaskFromAssignment(ctx context.Context, arg RemoveTaskFromAssignmentParams) error
 	TopicsByName(ctx context.Context, name string) ([]Topic, error)
+	UnenrollStudent(ctx context.Context, arg UnenrollStudentParams) error
+	UpdateAssignment(ctx context.Context, arg UpdateAssignmentParams) error
 	UpdateAttemptStatus(ctx context.Context, arg UpdateAttemptStatusParams) error
+	UpdateCourse(ctx context.Context, arg UpdateCourseParams) error
 	UpdateTask(ctx context.Context, arg UpdateTaskParams) error
+	UpdateTaskCourseAndVisibility(ctx context.Context, arg UpdateTaskCourseAndVisibilityParams) error
+	UpdateTaskOrderAndWeight(ctx context.Context, arg UpdateTaskOrderAndWeightParams) error
 	UpdateTopicsCounters(ctx context.Context, arg UpdateTopicsCountersParams) error
 }
 

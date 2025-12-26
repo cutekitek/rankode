@@ -76,6 +76,7 @@ func (h *attemptsHandler) CreateAttemptHandler(c fiber.Ctx, dto models.CreateAtt
 // @Produce json
 // @Security ApiKeyAuoth
 // @Param taskId query int true "Task ID"
+// @Param assignmentId query int false "Assignment ID"
 // @Success 200 {array} models.GetUserTaskAttemptsResponse "List of attempts"
 // @Failure 400 {object} apierror.ApiError "Bad request (e.g., missing or invalid taskId)"
 // @Failure 401 {object} apierror.ApiError "Unauthorized"
@@ -96,26 +97,43 @@ func (h *attemptsHandler) GetUserTaskAttemptsHandler(c fiber.Ctx) error {
 	}
 	taskID := int32(taskIDInt)
 
+	var assignmentID *int32
+	assignmentIDStr := c.Query("assignmentId", "")
+	if assignmentIDStr != "" {
+		aid, err := strconv.Atoi(assignmentIDStr)
+		if err == nil {
+			aid32 := int32(aid)
+			assignmentID = &aid32
+		}
+	}
+
 	rawUserID := middleware.UserIDFromContext(c)
 	user := db.User{ID: *rawUserID}
 
-	attempts, err := h.service.GetUserTaskAttempts(c.Context(), user, taskID)
+	attempts, err := h.service.GetUserTaskAttempts(c.Context(), user, taskID, assignmentID)
 
 	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
 	}
 	response := make([]models.GetUserTaskAttemptsResponse, 0, len(attempts))
 	for _, a := range attempts {
-		response = append(response, 
-		models.GetUserTaskAttemptsResponse{
-			Id:          int(a.ID),
-			Code:        a.Code,
-			Language:    "",
-			Status:      int(a.AttemptStatus),
-			UpdatedAt:   a.UpdatedAt.Time,
-			RunningTime: int(a.RunningTime.Int32),
-			MemoryUsage: int(a.Memory.Int32),
-		})
+		var aid *int
+		if a.AssignmentID.Valid {
+			val := int(a.AssignmentID.Int32)
+			aid = &val
+		}
+
+		response = append(response,
+			models.GetUserTaskAttemptsResponse{
+				Id:           int(a.ID),
+				Code:         a.Code,
+				Language:     "",
+				Status:       int(a.AttemptStatus),
+				UpdatedAt:    a.UpdatedAt.Time,
+				RunningTime:  int(a.RunningTime.Int32),
+				MemoryUsage:  int(a.Memory.Int32),
+				AssignmentID: aid,
+			})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)

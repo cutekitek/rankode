@@ -14,15 +14,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-
-
 type fileStorage interface {
 	GetFile(ctx context.Context, params files.GetFileParams) (io.Reader, error)
 }
 
 type TasksValidator struct {
-	q db.DynamicQuerier
-	db *pgxpool.Pool
+	q     db.DynamicQuerier
+	db    *pgxpool.Pool
 	files fileStorage
 }
 
@@ -54,7 +52,7 @@ func (s *TasksValidator) ValidateAndUpdate(ctx context.Context, data models.Atte
 
 	var runningTime int64
 	for i, test := range data.Tests {
-		outFile, err := s.getOutFile(ctx,  testCases[i].OutputFile)
+		outFile, err := s.getOutFile(ctx, testCases[i].OutputFile)
 		if err != nil {
 			slog.Error("TasksValidator: failed to get output file", "error", err, "task_id", attempt.TaskID, "filename", testCases[i].OutputFile)
 			s.setErrorStatus(ctx, data.Id, models.AttemptStatusInternalError, fmt.Sprintf("Ошибка в тесте #%d", test.CaseId+1))
@@ -67,11 +65,12 @@ func (s *TasksValidator) ValidateAndUpdate(ctx context.Context, data models.Atte
 		}
 		runningTime += test.ExecutionTime
 	}
-	
+
 	alreadySubmitted, err := s.q.CheckFirstSuccessfulAttempt(ctx, db.CheckFirstSuccessfulAttemptParams{
 		UserID:        attempt.UserID,
 		TaskID:        attempt.TaskID,
 		AttemptStatus: int32(models.AttemptStatusSuccessful),
+		AssignmentID:  attempt.AssignmentID,
 	})
 	if err != nil {
 		slog.Error("TasksValidator: failed check already submitted", "error", err, "attempt_id", attempt.ID)
@@ -81,7 +80,7 @@ func (s *TasksValidator) ValidateAndUpdate(ctx context.Context, data models.Atte
 
 	task, err := s.q.GetTaskById(ctx, attempt.TaskID)
 	if err != nil {
-		slog.Error("TasksValidator: failed to get task", "error", err, "task_id", attempt.TaskID, )
+		slog.Error("TasksValidator: failed to get task", "error", err, "task_id", attempt.TaskID)
 		s.setErrorStatus(ctx, data.Id, models.AttemptStatusInternalError, "")
 		return
 	}
@@ -90,24 +89,39 @@ func (s *TasksValidator) ValidateAndUpdate(ctx context.Context, data models.Atte
 		q := s.q.WithTx(tx)
 		if err := q.UpdateAttemptStatus(ctx, db.UpdateAttemptStatusParams{
 			AttemptStatus: int32(models.AttemptStatusSuccessful),
-			RunningTime:   pgtype.Int4{
+			RunningTime: pgtype.Int4{
 				Int32: int32(runningTime),
 				Valid: true,
 			},
-			Memory:        pgtype.Int4{
+			Memory: pgtype.Int4{
 				Int32: int32(data.MemoryUsage),
 				Valid: true,
 			},
-			ID:            data.Id,
+			ID: data.Id,
 		}); err != nil {
-			return fmt.Errorf("failed update attempt status: %w",  err)
+			return fmt.Errorf("failed update attempt status: %w", err)
 		}
 		if !alreadySubmitted {
 			if err := q.IncreaseTaskPasses(ctx, attempt.TaskID); err != nil {
-				return fmt.Errorf("failed increase task passes: %w",  err)
+				return fmt.Errorf("failed increase task passes: %w", err)
 			}
 			if err := q.IncreaseUserElo(ctx, db.IncreaseUserEloParams{ID: attempt.UserID, Elo: task.Difficulty + 1}); err != nil {
-				return fmt.Errorf("failed increase user elo: %w",  err)
+				return fmt.Errorf("failed increase user elo: %w", err)
+			}
+
+			// Automatic Grading for Assignments
+			if attempt.AssignmentID.Valid {
+				if _, err := q.CreateOrUpdateGrade(ctx, db.CreateOrUpdateGradeParams{
+					AssignmentID: attempt.AssignmentID.Int32,
+					TaskID:       attempt.TaskID,
+					UserID:       attempt.UserID,
+					Grade:        5, // Default grade for successful completion
+					Feedback:     pgtype.Text{String: "Automatically graded on success", Valid: true},
+					GradedBy:     pgtype.Int4{Valid: false}, // System
+				}); err != nil {
+					slog.Warn("TasksValidator: failed to auto-grade", "error", err, "attempt_id", attempt.ID)
+					// Don't fail the whole transaction for grading
+				}
 			}
 		}
 		return nil
@@ -121,11 +135,11 @@ func (s *TasksValidator) ValidateAndUpdate(ctx context.Context, data models.Atte
 func (s *TasksValidator) setErrorStatus(ctx context.Context, id int64, status models.AttemptStatus, errorStr string) {
 	if err := s.q.UpdateAttemptStatus(ctx, db.UpdateAttemptStatusParams{
 		AttemptStatus: int32(status),
-		Error:         pgtype.Text{
+		Error: pgtype.Text{
 			String: errorStr,
-			Valid: true,
+			Valid:  true,
 		},
-		ID:            id,
+		ID: id,
 	}); err != nil {
 		slog.Error("TasksValidator: failed update attempt status", "error", err)
 	}

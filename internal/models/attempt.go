@@ -20,7 +20,7 @@ const (
 	AttemptStatusBuildFailed   AttemptStatus = iota
 	AttemptStatusRunFailed     AttemptStatus = iota
 	AttemptStatusInternalError AttemptStatus = iota
-	AttemptStatusCreated AttemptStatus = iota
+	AttemptStatusCreated       AttemptStatus = iota
 
 	AttemptStatusWrongAnswer AttemptStatus = iota
 )
@@ -37,9 +37,9 @@ type AttemptRequest struct {
 }
 
 type TestCase struct {
-	Id        int64  `json:"id"`
-	Order     int32  `json:"order"`
-	InputFileName string `json:"input_file"`
+	Id             int64  `json:"id"`
+	Order          int32  `json:"order"`
+	InputFileName  string `json:"input_file"`
 	OutputFileName string `json:"output_file"`
 }
 
@@ -58,20 +58,20 @@ type TestStatus struct {
 	ExecutionTime int64          `json:"execution_time"`
 }
 
-
 type CreateAttemptRequest struct {
-	TaskID int `json:"task_id"`
-	Code string `json:"code"`
-	Language string `json:"lang"`
-	
+	TaskID       int    `json:"task_id"`
+	Code         string `json:"code"`
+	Language     string `json:"lang"`
+	AssignmentID *int   `json:"assignment_id,omitempty"`
 }
 
 type GetUserTaskAttemptsResponse struct {
-	Id int `json:"id"`
-	Code string `json:"code"`
-	Language string `json:"lang"`
-	Status int `json:"status"`
-	RunningTime int `json:"running_time"`
-	MemoryUsage int `json:"memory_usage"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Id           int       `json:"id"`
+	Code         string    `json:"code"`
+	Language     string    `json:"lang"`
+	Status       int       `json:"status"`
+	RunningTime  int       `json:"running_time"`
+	MemoryUsage  int       `json:"memory_usage"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	AssignmentID *int      `json:"assignment_id,omitempty"`
 }

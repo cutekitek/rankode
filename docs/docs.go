@@ -15,6 +15,451 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/assignments": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves assignments for the current user (as teacher or student)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "List assignments",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by course ID",
+                        "name": "course_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of assignments",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Assignment"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Creates a new assignment in a course (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "Create a new assignment",
+                "parameters": [
+                    {
+                        "description": "Assignment creation payload",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateAssignmentDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created assignment",
+                        "schema": {
+                            "$ref": "#/definitions/db.Assignment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/assignments/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves a single assignment by its ID with included tasks",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "Get assignment by ID with tasks",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assignment details",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssignmentResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Updates an existing assignment (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "Update assignment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment update payload",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateAssignmentDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assignment updated successfully"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Deletes an assignment (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "Delete assignment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Assignment deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/assignments/{id}/stats": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves statistics for an assignment (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "Get assignment statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assignment statistics",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssignmentStats"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/assignments/{id}/tasks": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Adds an existing task to an assignment (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "Add task to assignment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Task addition payload",
+                        "name": "task",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AddTaskToAssignmentDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task added to assignment successfully"
+                    },
+                    "400": {
+                        "description": "Bad request (task not in course, already added)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment or task not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/assignments/{id}/tasks/{taskId}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Removes a task from an assignment (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assignments"
+                ],
+                "summary": "Remove task from assignment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Task ID",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task removed from assignment successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment or task not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
         "/attempts": {
             "get": {
                 "security": [
@@ -40,6 +485,12 @@ const docTemplate = `{
                         "name": "taskId",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "assignmentId",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -229,6 +680,728 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/apierror.Api"
+                        }
+                    }
+                }
+            }
+        },
+        "/courses": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves courses for the current user (as teacher or student)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "List courses",
+                "responses": {
+                    "200": {
+                        "description": "List of courses",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Course"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Creates a new course (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Create a new course",
+                "parameters": [
+                    {
+                        "description": "Course creation payload",
+                        "name": "course",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateCourseDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created course",
+                        "schema": {
+                            "$ref": "#/definitions/db.Course"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not a teacher)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/enroll": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Enrolls the current user in a course using join code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Enroll in a course using join code",
+                "parameters": [
+                    {
+                        "description": "Join code",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.JoinCourseDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully enrolled",
+                        "schema": {
+                            "$ref": "#/definitions/db.Course"
+                        }
+                    },
+                    "400": {
+                        "description": "Already enrolled or invalid join code",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves a single course by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Get course by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Course ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course details",
+                        "schema": {
+                            "$ref": "#/definitions/models.CourseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Updates an existing course (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Update course",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Course ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Course update payload",
+                        "name": "course",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateCourseDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course updated successfully"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Deletes a course (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Delete course",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Course ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Course deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/{id}/enroll": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Enrolls the current user in a course (requires teacher permission?)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Enroll in a course (direct)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Course ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully enrolled"
+                    },
+                    "400": {
+                        "description": "Already enrolled",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Removes the current user from a course",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Unenroll from a course",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Course ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully unenrolled"
+                    },
+                    "400": {
+                        "description": "Not enrolled",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/{id}/students": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Lists all students enrolled in a course (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "List students in course",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Course ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of students",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.StudentInCourse"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves grades based on filters (teacher sees all, students see own)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "List grades",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by assignment ID",
+                        "name": "assignment_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by course ID",
+                        "name": "course_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by student ID (teacher only)",
+                        "name": "student_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of grades",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GradeResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Creates or updates a grade for a student's task in an assignment (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Create or update a grade",
+                "parameters": [
+                    {
+                        "description": "Grade payload",
+                        "name": "grade",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateGradeDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Grade created/updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/db.Grade"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment, task, or student not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/stats": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves statistics for an assignment (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Get grade statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Assignment ID",
+                        "name": "assignment_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Grade statistics",
+                        "schema": {
+                            "$ref": "#/definitions/models.GradeStats"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher of course)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Deletes a grade by ID (teacher only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Delete a grade",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Grade ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Grade deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden (not teacher)",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "404": {
+                        "description": "Grade not found",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apierror.ApiError"
                         }
                     }
                 }
@@ -829,6 +2002,64 @@ const docTemplate = `{
                 "error": {}
             }
         },
+        "db.Assignment": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "description": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "due_date": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "max_attempts_per_task": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
+                "start_date": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "db.Course": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "description": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "join_code": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
         "db.GetUsersLeaderboardRow": {
             "type": "object",
             "properties": {
@@ -840,9 +2071,41 @@ const docTemplate = `{
                 }
             }
         },
+        "db.Grade": {
+            "type": "object",
+            "properties": {
+                "assignment_id": {
+                    "type": "integer"
+                },
+                "feedback": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "grade": {
+                    "type": "integer"
+                },
+                "graded_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "graded_by": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "task_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "db.Task": {
             "type": "object",
             "properties": {
+                "course_id": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
                 "created_at": {
                     "$ref": "#/definitions/pgtype.Timestamp"
                 },
@@ -854,6 +2117,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
                 },
                 "passes": {
                     "type": "integer"
@@ -924,6 +2190,9 @@ const docTemplate = `{
         "db.UpdateTaskParams": {
             "type": "object",
             "properties": {
+                "course_id": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -932,6 +2201,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
                 },
                 "passes": {
                     "type": "integer"
@@ -979,6 +2251,87 @@ const docTemplate = `{
                 }
             }
         },
+        "models.AddTaskToAssignmentDTO": {
+            "type": "object",
+            "required": [
+                "task_id"
+            ],
+            "properties": {
+                "order_index": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "task_id": {
+                    "type": "integer"
+                },
+                "weight": {
+                    "type": "number",
+                    "maximum": 5,
+                    "minimum": 0.1
+                }
+            }
+        },
+        "models.AssignmentResponse": {
+            "type": "object",
+            "properties": {
+                "course": {
+                    "$ref": "#/definitions/db.Course"
+                },
+                "course_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "description": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "due_date": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "max_attempts_per_task": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
+                "start_date": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TaskWithOrder"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "total_tasks": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "models.AssignmentStats": {
+            "type": "object",
+            "properties": {
+                "average_grade": {
+                    "type": "number"
+                },
+                "completed_count": {
+                    "type": "integer"
+                },
+                "submissions_count": {
+                    "type": "integer"
+                },
+                "total_students": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.AuthUserDTO": {
             "type": "object",
             "required": [
@@ -994,9 +2347,79 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CourseResponse": {
+            "type": "object",
+            "properties": {
+                "assignment_count": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "description": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "join_code": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "student_count": {
+                    "type": "integer"
+                },
+                "teacher": {
+                    "$ref": "#/definitions/db.User"
+                },
+                "teacher_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "models.CreateAssignmentDTO": {
+            "type": "object",
+            "required": [
+                "course_id",
+                "title"
+            ],
+            "properties": {
+                "course_id": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "due_date": {
+                    "type": "string"
+                },
+                "max_attempts_per_task": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
         "models.CreateAttemptRequest": {
             "type": "object",
             "properties": {
+                "assignment_id": {
+                    "type": "integer"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -1008,14 +2431,66 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CreateCourseDTO": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.CreateGradeDTO": {
+            "type": "object",
+            "required": [
+                "assignment_id",
+                "grade",
+                "task_id",
+                "user_id"
+            ],
+            "properties": {
+                "assignment_id": {
+                    "type": "integer"
+                },
+                "feedback": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "grade": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
+                },
+                "task_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.CreateTaskDTO": {
             "type": "object",
             "properties": {
+                "course_id": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string"
                 },
                 "difficulty": {
                     "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
                 },
                 "title": {
                     "type": "string"
@@ -1052,6 +2527,9 @@ const docTemplate = `{
         "models.GetUserTaskAttemptsResponse": {
             "type": "object",
             "properties": {
+                "assignment_id": {
+                    "type": "integer"
+                },
                 "code": {
                     "type": "string"
                 },
@@ -1075,6 +2553,97 @@ const docTemplate = `{
                 }
             }
         },
+        "models.GradeResponse": {
+            "type": "object",
+            "properties": {
+                "assignment_id": {
+                    "type": "integer"
+                },
+                "assignment_title": {
+                    "type": "string"
+                },
+                "feedback": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "grade": {
+                    "type": "integer"
+                },
+                "graded_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "graded_by": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
+                "graded_by_username": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "student_username": {
+                    "type": "string"
+                },
+                "task_id": {
+                    "type": "integer"
+                },
+                "task_title": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.GradeStats": {
+            "type": "object",
+            "properties": {
+                "average_grade": {
+                    "type": "number"
+                },
+                "grade_distribution": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "highest_grade": {
+                    "type": "integer"
+                },
+                "lowest_grade": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.GradeSummary": {
+            "type": "object",
+            "properties": {
+                "assignment_id": {
+                    "type": "integer"
+                },
+                "assignment_title": {
+                    "type": "string"
+                },
+                "average_grade": {
+                    "type": "number"
+                },
+                "tasks_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.JoinCourseDTO": {
+            "type": "object",
+            "required": [
+                "join_code"
+            ],
+            "properties": {
+                "join_code": {
+                    "type": "string",
+                    "maxLength": 10,
+                    "minLength": 6
+                }
+            }
+        },
         "models.NewTestCaseReq": {
             "type": "object",
             "properties": {
@@ -1083,9 +2652,53 @@ const docTemplate = `{
                 }
             }
         },
+        "models.StudentInCourse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "elo": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "enrolled_at": {
+                    "type": "string"
+                },
+                "grades": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.GradeSummary"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "password_hash": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "roles": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "models.TaskByIdResponse": {
             "type": "object",
             "properties": {
+                "course_id": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
                 "created_at": {
                     "$ref": "#/definitions/pgtype.Timestamp"
                 },
@@ -1097,6 +2710,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
                 },
                 "passes": {
                     "type": "integer"
@@ -1127,6 +2743,101 @@ const docTemplate = `{
                 }
             }
         },
+        "models.TaskWithOrder": {
+            "type": "object",
+            "properties": {
+                "course_id": {
+                    "$ref": "#/definitions/pgtype.Int4"
+                },
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "difficulty": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "order_index": {
+                    "type": "integer"
+                },
+                "passes": {
+                    "type": "integer"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "weight": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.UpdateAssignmentDTO": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "due_date": {
+                    "type": "string"
+                },
+                "max_attempts_per_task": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.UpdateCourseDTO": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
         "pgtype.InfinityModifier": {
             "type": "integer",
             "enum": [
@@ -1139,6 +2850,28 @@ const docTemplate = `{
                 "Finite",
                 "NegativeInfinity"
             ]
+        },
+        "pgtype.Int4": {
+            "type": "object",
+            "properties": {
+                "int32": {
+                    "type": "integer"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.Text": {
+            "type": "object",
+            "properties": {
+                "string": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
         },
         "pgtype.Timestamp": {
             "type": "object",

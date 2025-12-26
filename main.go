@@ -12,9 +12,13 @@ import (
 	"rankode/internal/config"
 	"rankode/internal/middleware"
 	db "rankode/internal/repository"
+	"rankode/internal/services/assignments"
 	"rankode/internal/services/attempts"
 	"rankode/internal/services/auth"
+	"rankode/internal/services/courses"
 	"rankode/internal/services/files"
+	"rankode/internal/services/grades"
+	"rankode/internal/services/groups"
 	"rankode/internal/services/rabbit_runner"
 	"rankode/internal/services/tasks"
 	tasksvalidator "rankode/internal/services/tasks_validator"
@@ -66,6 +70,10 @@ func main() {
 	authService := auth.NewAuthService(cfg)
 	taskService := tasks.NewTaskService(pgPool)
 	testCasesService := test_cases.NewTestCasesService(taskService, fileStorage, execer)
+	coursesService := courses.NewCourseService(execer, pgPool)
+	assignmentsService := assignments.NewAssignmentService(execer, pgPool)
+	gradesService := grades.NewGradeService(execer, pgPool)
+	groupsService := groups.NewGroupService(execer, pgPool)
 
 	attemptsValidator := tasksvalidator.NewTasksValidator(execer, pgPool, fileStorage)
 	runner, err := rabbitrunner.NewRabbitMQRunner(rabbitrunner.RabbitMQRunnerConfig{
@@ -84,18 +92,16 @@ func main() {
 
 	attemptsService := attempts.NewAttemptsService(execer, pgPool, runner)
 
-
 	app := fiber.New(fiber.Config{
-		ServerHeader: "supaserver-3000",
-		StreamRequestBody: true,
-		BodyLimit: 20 * 1024 * 1024,
+		ServerHeader:             "supaserver-3000",
+		StreamRequestBody:        true,
+		BodyLimit:                20 * 1024 * 1024,
 		EnableSplittingOnParsers: true,
-		
 	})
 	app.Use(cors.New(cors.ConfigDefault))
 	app.Use(compress.New())
 	app.Use(logger.New())
-	
+
 	staticFS, err := fs.Sub(staticEmbed, "frontend/dist")
 	if err != nil {
 		panic(err)
@@ -103,7 +109,7 @@ func main() {
 	app.Use("/", static.New("", static.Config{
 		FS: staticFS,
 	}))
-	
+
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 	apiGroup := app.Group("/api")
 	api.NewAuthHandler(usersService, authService).RegisterRoutes(apiGroup)
@@ -112,9 +118,12 @@ func main() {
 	api.NewTestCasesHandler(testCasesService).RegisterRoutes(apiGroup, authMiddleware)
 	api.NewAttemptsHandler(attemptsService).RegisterRoutes(apiGroup, authMiddleware)
 	api.NewLeaderboardHandler(usersService).RegisterRoutes(apiGroup)
-	
+	api.NewCoursesHandler(coursesService).RegisterRoutes(apiGroup, authMiddleware)
+	api.NewAssignmentsHandler(assignmentsService).RegisterRoutes(apiGroup, authMiddleware)
+	api.NewGradesHandler(gradesService).RegisterRoutes(apiGroup, authMiddleware)
+	api.NewGroupsHandler(groupsService).RegisterRoutes(apiGroup, authMiddleware)
 
-	app.Use(func (c fiber.Ctx) error {
+	app.Use(func(c fiber.Ctx) error {
 		return c.SendFile("index.html", fiber.SendFile{
 			FS: staticFS,
 		})

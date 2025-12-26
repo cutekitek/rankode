@@ -11,6 +11,7 @@ import (
 	db "rankode/internal/repository"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,11 +20,10 @@ type AttemptsQueue interface {
 }
 
 type AttemptsService struct {
-	q db.DynamicQuerier
+	q     db.DynamicQuerier
 	queue AttemptsQueue
-	db *pgxpool.Pool
+	db    *pgxpool.Pool
 }
-
 
 func NewAttemptsService(q db.DynamicQuerier, db *pgxpool.Pool, queue AttemptsQueue) *AttemptsService {
 	return &AttemptsService{
@@ -32,7 +32,6 @@ func NewAttemptsService(q db.DynamicQuerier, db *pgxpool.Pool, queue AttemptsQue
 		db:    db,
 	}
 }
-
 
 func (s *AttemptsService) NewAttempt(ctx context.Context, user db.User, params models.CreateAttemptRequest) error {
 	testCases, err := s.q.GetTaskTestCases(ctx, int32(params.TaskID))
@@ -44,9 +43,15 @@ func (s *AttemptsService) NewAttempt(ctx context.Context, user db.User, params m
 	}
 	return pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
+		assignmentID := pgtype.Int4{Valid: false}
+		if params.AssignmentID != nil {
+			assignmentID = pgtype.Int4{Int32: int32(*params.AssignmentID), Valid: true}
+		}
+
 		attempts, err := q.GetUserAttemptsByTask(ctx, db.GetUserAttemptsByTaskParams{
-			UserID: user.ID,
-			TaskID: int32(params.TaskID),
+			UserID:       user.ID,
+			TaskID:       int32(params.TaskID),
+			AssignmentID: assignmentID,
 		})
 		if err != nil {
 			return fmt.Errorf("GetUserAttemptsByTask: %w", err)
@@ -56,13 +61,14 @@ func (s *AttemptsService) NewAttempt(ctx context.Context, user db.User, params m
 				return apierror.WrapErrorApi(errors.New("still running"), 400)
 			}
 		}
-		
+
 		attempt, err := q.CreateAttempt(ctx, db.CreateAttemptParams{
 			UserID:        user.ID,
 			TaskID:        int32(params.TaskID),
 			Code:          params.Code,
 			AttemptStatus: int32(models.AttemptStatusCreated),
-			Language: params.Language,
+			Language:      params.Language,
+			AssignmentID:  assignmentID,
 		})
 		if err != nil {
 			return fmt.Errorf("CreateAttempt: %w", err)
@@ -80,9 +86,13 @@ func (s *AttemptsService) NewAttempt(ctx context.Context, user db.User, params m
 	})
 }
 
-func (s *AttemptsService) GetUserTaskAttempts(ctx context.Context, user db.User, taskId int32) ([]db.Attempt, error) {
-	return s.q.GetUserAttemptsByTask(ctx, db.GetUserAttemptsByTaskParams{
+func (s *AttemptsService) GetUserTaskAttempts(ctx context.Context, user db.User, taskId int32, assignmentID *int32) ([]db.Attempt, error) {
+	params := db.GetUserAttemptsByTaskParams{
 		UserID: user.ID,
 		TaskID: taskId,
-	})
-} 
+	}
+	if assignmentID != nil {
+		params.AssignmentID = pgtype.Int4{Int32: *assignmentID, Valid: true}
+	}
+	return s.q.GetUserAttemptsByTask(ctx, params)
+}

@@ -12,7 +12,7 @@ services:
       POSTGRES_USER: rankode
       POSTGRES_PASSWORD: ${PG_PASSWORD}
     volumes:
-      - "./rankode/postgres:/var/lib/postgresql/data"
+      - "/home/ferret/containers/rankode/postgres:/var/lib/postgresql/data"
   
   rabbitmq:
     image: "rabbitmq:management-alpine"
@@ -37,7 +37,7 @@ services:
     networks:
       - rankode
     volumes:
-        - ./rankode/minio:/data
+        - /home/ferret/containers/rankode/:/data
     environment:
         MINIO_ROOT_USER: ${MINIO_LOGIN}
         MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}

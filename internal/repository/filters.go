@@ -7,4 +7,7 @@ type TaskListFilter struct {
 	SortBy       *string `json:"sort" query:"sort" validate:"omitempty,oneof=name difficulty score"`
 	Limit        int     `json:"limit" query:"limit" validate:"min=10,max=25"`
 	Offset       int     `json:"offset" query:"offset"`
+	CourseID     *int32  `json:"course_id" query:"course_id"`
+	IsPublic     *bool   `json:"is_public" query:"is_public"`
+	UserID       *int32  `json:"user_id" query:"user_id"`
 }

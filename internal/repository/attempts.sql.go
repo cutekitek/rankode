@@ -12,32 +12,39 @@ import (
 )
 
 const checkFirstSuccessfulAttempt = `-- name: CheckFirstSuccessfulAttempt :one
-SELECT EXISTS(SELECT id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at from attempts where user_id = $1 and task_id = $2 and attempt_status = $3)
+SELECT EXISTS(SELECT id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at, assignment_id from attempts where user_id = $1 and task_id = $2 and attempt_status = $3 AND (assignment_id = $4 OR $4 IS NULL))
 `
 
 type CheckFirstSuccessfulAttemptParams struct {
-	UserID        int32 `json:"user_id"`
-	TaskID        int32 `json:"task_id"`
-	AttemptStatus int32 `json:"attempt_status"`
+	UserID        int32       `json:"user_id"`
+	TaskID        int32       `json:"task_id"`
+	AttemptStatus int32       `json:"attempt_status"`
+	AssignmentID  pgtype.Int4 `json:"assignment_id"`
 }
 
 func (q *Queries) CheckFirstSuccessfulAttempt(ctx context.Context, arg CheckFirstSuccessfulAttemptParams) (bool, error) {
-	row := q.db.QueryRow(ctx, checkFirstSuccessfulAttempt, arg.UserID, arg.TaskID, arg.AttemptStatus)
+	row := q.db.QueryRow(ctx, checkFirstSuccessfulAttempt,
+		arg.UserID,
+		arg.TaskID,
+		arg.AttemptStatus,
+		arg.AssignmentID,
+	)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
 const createAttempt = `-- name: CreateAttempt :one
-INSERT INTO attempts(user_id, task_id, language, code, attempt_status) VALUES ($1, $2, $3, $4, $5) RETURNING id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at
+INSERT INTO attempts(user_id, task_id, language, code, attempt_status, assignment_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at, assignment_id
 `
 
 type CreateAttemptParams struct {
-	UserID        int32  `json:"user_id"`
-	TaskID        int32  `json:"task_id"`
-	Language      string `json:"language"`
-	Code          string `json:"code"`
-	AttemptStatus int32  `json:"attempt_status"`
+	UserID        int32       `json:"user_id"`
+	TaskID        int32       `json:"task_id"`
+	Language      string      `json:"language"`
+	Code          string      `json:"code"`
+	AttemptStatus int32       `json:"attempt_status"`
+	AssignmentID  pgtype.Int4 `json:"assignment_id"`
 }
 
 func (q *Queries) CreateAttempt(ctx context.Context, arg CreateAttemptParams) (Attempt, error) {
@@ -47,6 +54,7 @@ func (q *Queries) CreateAttempt(ctx context.Context, arg CreateAttemptParams) (A
 		arg.Language,
 		arg.Code,
 		arg.AttemptStatus,
+		arg.AssignmentID,
 	)
 	var i Attempt
 	err := row.Scan(
@@ -61,12 +69,13 @@ func (q *Queries) CreateAttempt(ctx context.Context, arg CreateAttemptParams) (A
 		&i.Memory,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AssignmentID,
 	)
 	return i, err
 }
 
 const getAttemptById = `-- name: GetAttemptById :one
-SELECT id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at FROM attempts WHERE id = $1
+SELECT id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at, assignment_id FROM attempts WHERE id = $1
 `
 
 func (q *Queries) GetAttemptById(ctx context.Context, id int64) (Attempt, error) {
@@ -84,21 +93,23 @@ func (q *Queries) GetAttemptById(ctx context.Context, id int64) (Attempt, error)
 		&i.Memory,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AssignmentID,
 	)
 	return i, err
 }
 
 const getUserAttemptsByTask = `-- name: GetUserAttemptsByTask :many
-SELECT id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at from attempts WHERE user_id = $1 and task_id = $2 ORDER BY updated_at DESC
+SELECT id, user_id, task_id, language, code, attempt_status, error, running_time, memory, created_at, updated_at, assignment_id from attempts WHERE user_id = $1 and task_id = $2 AND (assignment_id = $3 OR $3 IS NULL) ORDER BY updated_at DESC
 `
 
 type GetUserAttemptsByTaskParams struct {
-	UserID int32 `json:"user_id"`
-	TaskID int32 `json:"task_id"`
+	UserID       int32       `json:"user_id"`
+	TaskID       int32       `json:"task_id"`
+	AssignmentID pgtype.Int4 `json:"assignment_id"`
 }
 
 func (q *Queries) GetUserAttemptsByTask(ctx context.Context, arg GetUserAttemptsByTaskParams) ([]Attempt, error) {
-	rows, err := q.db.Query(ctx, getUserAttemptsByTask, arg.UserID, arg.TaskID)
+	rows, err := q.db.Query(ctx, getUserAttemptsByTask, arg.UserID, arg.TaskID, arg.AssignmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +129,7 @@ func (q *Queries) GetUserAttemptsByTask(ctx context.Context, arg GetUserAttempts
 			&i.Memory,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AssignmentID,
 		); err != nil {
 			return nil, err
 		}

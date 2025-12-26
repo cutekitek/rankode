@@ -8,6 +8,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Assignment struct {
+	ID                 int32            `json:"id"`
+	CourseID           int32            `json:"course_id"`
+	Title              string           `json:"title"`
+	Description        pgtype.Text      `json:"description"`
+	StartDate          pgtype.Timestamp `json:"start_date"`
+	DueDate            pgtype.Timestamp `json:"due_date"`
+	MaxAttemptsPerTask pgtype.Int4      `json:"max_attempts_per_task"`
+	CreatedAt          pgtype.Timestamp `json:"created_at"`
+	UpdatedAt          pgtype.Timestamp `json:"updated_at"`
+	GroupID            pgtype.Int4      `json:"group_id"`
+}
+
+type AssignmentTask struct {
+	AssignmentID int32          `json:"assignment_id"`
+	TaskID       int32          `json:"task_id"`
+	OrderIndex   int32          `json:"order_index"`
+	Weight       pgtype.Numeric `json:"weight"`
+}
+
 type Attempt struct {
 	ID            int64            `json:"id"`
 	UserID        int32            `json:"user_id"`
@@ -20,6 +40,47 @@ type Attempt struct {
 	Memory        pgtype.Int4      `json:"memory"`
 	CreatedAt     pgtype.Timestamp `json:"created_at"`
 	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
+	AssignmentID  pgtype.Int4      `json:"assignment_id"`
+}
+
+type Course struct {
+	ID          int32            `json:"id"`
+	TeacherID   int32            `json:"teacher_id"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	JoinCode    string           `json:"join_code"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+type Enrollment struct {
+	CourseID   int32            `json:"course_id"`
+	UserID     int32            `json:"user_id"`
+	EnrolledAt pgtype.Timestamp `json:"enrolled_at"`
+	Role       pgtype.Text      `json:"role"`
+}
+
+type Grade struct {
+	ID           int32            `json:"id"`
+	AssignmentID int32            `json:"assignment_id"`
+	TaskID       int32            `json:"task_id"`
+	UserID       int32            `json:"user_id"`
+	Grade        int16            `json:"grade"`
+	Feedback     pgtype.Text      `json:"feedback"`
+	GradedBy     pgtype.Int4      `json:"graded_by"`
+	GradedAt     pgtype.Timestamp `json:"graded_at"`
+}
+
+type Group struct {
+	ID        int32            `json:"id"`
+	CourseID  int32            `json:"course_id"`
+	Name      string           `json:"name"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type GroupStudent struct {
+	GroupID int32 `json:"group_id"`
+	UserID  int32 `json:"user_id"`
 }
 
 type Language struct {
@@ -37,6 +98,8 @@ type Task struct {
 	Topics      []int32          `json:"topics"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	CourseID    pgtype.Int4      `json:"course_id"`
+	IsPublic    bool             `json:"is_public"`
 }
 
 type TaskTestCase struct {

@@ -23,6 +23,15 @@ func (q *Queries) GetTaskListByFilter(ctx context.Context, filter TaskListFilter
 	if len(filter.Title) > 0 {
 		query = query.Where("title LIKE '%' || ? || '%'", filter.Title)
 	}
+	if filter.CourseID != nil {
+		query = query.Where(sq.Eq{"course_id": *filter.CourseID})
+	}
+	if filter.IsPublic != nil {
+		query = query.Where(sq.Eq{"is_public": *filter.IsPublic})
+	}
+	if filter.UserID != nil {
+		query = query.Where(sq.Eq{"user_id": *filter.UserID})
+	}
 	sql, args, err := query.ToSql()
 	fmt.Println(sql, args)
 	if err != nil {
@@ -48,6 +57,8 @@ func (q *Queries) GetTaskListByFilter(ctx context.Context, filter TaskListFilter
 			&i.Topics,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CourseID,
+			&i.IsPublic,
 		); err != nil {
 			return nil, err
 		}
