@@ -55,12 +55,13 @@ func setupTestApp(ctx context.Context) (*testApp, error) {
 	pgPool.Exec(ctx, "INSERT INTO languages (name) VALUES ('python'), ('go'), ('cpp'), ('java') ON CONFLICT DO NOTHING")
 	// Seed a topic
 	pgPool.Exec(ctx, "INSERT INTO topics (name) VALUES ('General') ON CONFLICT DO NOTHING")
+	pgPool.Exec(ctx, "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS verification_file TEXT")
 
 	execer := db.New(pgPool)
 	fileStorage := files.NewFileStorage(cfg)
 	usersService := users.NewUserService(execer)
 	authService := auth.NewAuthService(cfg)
-	taskService := tasks.NewTaskService(pgPool)
+	taskService := tasks.NewTaskService(pgPool, fileStorage)
 	testCasesService := test_cases.NewTestCasesService(taskService, fileStorage, execer)
 	coursesService := courses.NewCourseService(execer, pgPool)
 	assignmentsService := assignments.NewAssignmentService(execer, pgPool)
@@ -71,7 +72,7 @@ func setupTestApp(ctx context.Context) (*testApp, error) {
 	app := fiber.New()
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 	apiGroup := app.Group("/api")
-	
+
 	NewAuthHandler(usersService, authService).RegisterRoutes(apiGroup)
 	NewTasksHandler(taskService, testCasesService).RegisterRoutes(apiGroup, authMiddleware)
 	NewtopicsHandler(taskService).RegisterRoutes(apiGroup, authMiddleware)

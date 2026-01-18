@@ -15,3 +15,6 @@ UPDATE users SET elo = elo + $1 WHERE id = $2;
 
 -- name: GetUsersLeaderboard :many
 SELECT username, elo from users ORDER BY elo desc limit $1;
+
+-- name: UpdateUserRole :exec
+UPDATE users SET roles = $1 WHERE id = $2;

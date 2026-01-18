@@ -73,14 +73,21 @@ func (s *AttemptsService) NewAttempt(ctx context.Context, user db.User, params m
 		if err != nil {
 			return fmt.Errorf("CreateAttempt: %w", err)
 		}
+
+		task, err := q.GetTaskById(ctx, int32(params.TaskID))
+		if err != nil {
+			return fmt.Errorf("GetTaskById: %w", err)
+		}
+
 		checkReq := models.AttemptRequest{
-			Id:            attempt.ID,
-			Language:      params.Language,
-			Code:          params.Code,
-			MemoryLimit:   256 * 1024 * 1024,
-			Timeout:       1000,
-			MaxOutputSize: 10 * 1024 * 1024,
-			TestCases:     mappers.DbTestCasesToModelTestCase(testCases),
+			Id:               attempt.ID,
+			Language:         params.Language,
+			Code:             params.Code,
+			MemoryLimit:      256 * 1024 * 1024,
+			Timeout:          1000,
+			MaxOutputSize:    10 * 1024 * 1024,
+			VerificationFile: task.VerificationFile.String,
+			TestCases:        mappers.DbTestCasesToModelTestCase(testCases),
 		}
 		return s.queue.SendAttempt(checkReq)
 	})

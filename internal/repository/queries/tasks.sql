@@ -1,12 +1,15 @@
 -- name: CreateTask :one
-INSERT INTO tasks (user_id, title, description, difficulty, passes, score, topics, course_id, is_public)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO tasks (user_id, title, description, difficulty, passes, score, topics, course_id, is_public, verification_file)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- name: UpdateTask :exec
 UPDATE tasks
-SET title = $2, description = $3, difficulty = $4, passes = $5, score = $6, topics = $7, course_id = $8, is_public = $9, updated_at = CURRENT_TIMESTAMP
+SET title = $2, description = $3, difficulty = $4, passes = $5, score = $6, topics = $7, course_id = $8, is_public = $9, verification_file = $10, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
+
+-- name: UpdateTaskVerificationFile :exec
+UPDATE tasks SET verification_file = $2 WHERE id = $1;
 
 -- name: DeleteTask :exec
 DELETE FROM tasks

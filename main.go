@@ -19,6 +19,7 @@ import (
 	"rankode/internal/services/files"
 	"rankode/internal/services/grades"
 	"rankode/internal/services/groups"
+	"rankode/internal/services/lti"
 	"rankode/internal/services/rabbit_runner"
 	"rankode/internal/services/tasks"
 	tasksvalidator "rankode/internal/services/tasks_validator"
@@ -68,12 +69,13 @@ func main() {
 	execer.CreateTopic(ctx, "test")
 	usersService := users.NewUserService(execer)
 	authService := auth.NewAuthService(cfg)
-	taskService := tasks.NewTaskService(pgPool)
+	taskService := tasks.NewTaskService(pgPool, fileStorage)
 	testCasesService := test_cases.NewTestCasesService(taskService, fileStorage, execer)
 	coursesService := courses.NewCourseService(execer, pgPool)
 	assignmentsService := assignments.NewAssignmentService(execer, pgPool)
 	gradesService := grades.NewGradeService(execer, pgPool)
 	groupsService := groups.NewGroupService(execer, pgPool)
+	ltiService := lti.NewLtiService(cfg, execer, usersService)
 
 	attemptsValidator := tasksvalidator.NewTasksValidator(execer, pgPool, fileStorage)
 	runner, err := rabbitrunner.NewRabbitMQRunner(rabbitrunner.RabbitMQRunnerConfig{
@@ -113,6 +115,7 @@ func main() {
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 	apiGroup := app.Group("/api")
 	api.NewAuthHandler(usersService, authService).RegisterRoutes(apiGroup)
+	api.NewLtiHandler(cfg, ltiService, authService).RegisterRoutes(apiGroup)
 	api.NewTasksHandler(taskService, testCasesService).RegisterRoutes(apiGroup, authMiddleware)
 	api.NewtopicsHandler(taskService).RegisterRoutes(apiGroup, authMiddleware)
 	api.NewTestCasesHandler(testCasesService).RegisterRoutes(apiGroup, authMiddleware)

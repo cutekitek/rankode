@@ -1,0 +1,54 @@
+@startuml
+node "User's Device" as user_device {
+    node "Web Browser" as browser {
+        artifact "React SPA (Static Files)" as spa
+    }
+}
+
+node "Server (Docker Host)" as server {
+    node "Traefik (Reverse Proxy)" as traefik <<container>>
+    
+    node "Backend Node" as backend_node <<container>> {
+        artifact "Go Binary" as backend_app
+        artifact "Embedded Frontend Dist" as static_files
+    }
+    
+    node "Database Node" as db_node <<container>> {
+        database "PostgreSQL 17" as postgres
+    }
+    
+    node "Message Broker Node" as mq_node <<container>> {
+        queue "RabbitMQ" as rabbitmq
+    }
+    
+    node "Object Storage Node" as storage_node <<container>> {
+        storage "MinIO" as minio
+    }
+}
+
+node "Execution Workers Node(s)" as workers {
+    node "Code Execution Worker" as worker <<container>>
+}
+
+' External to Internal
+browser -- traefik : HTTPS (Port 443)
+traefik -- backend_app : HTTP (Port 4000)
+
+' Internal connections
+backend_app -- postgres : TCP (Port 5432)
+backend_app -- rabbitmq : AMQP (Port 5672)
+backend_app -- minio : S3 API (Port 9000)
+
+' Async Execution
+rabbitmq <..> worker : AMQP (Task Queues)
+
+' Persistence
+folder "Host Filesystem" as fs {
+    file "/var/lib/postgresql/data" as pg_data
+    file "/data" as minio_data
+}
+
+postgres -- pg_data : Mount
+minio -- minio_data : Mount
+
+@enduml

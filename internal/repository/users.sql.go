@@ -132,3 +132,17 @@ func (q *Queries) NewUser(ctx context.Context, arg NewUserParams) (User, error) 
 	)
 	return i, err
 }
+
+const updateUserRole = `-- name: UpdateUserRole :exec
+UPDATE users SET roles = $1 WHERE id = $2
+`
+
+type UpdateUserRoleParams struct {
+	Roles int32 `json:"roles"`
+	ID    int32 `json:"id"`
+}
+
+func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error {
+	_, err := q.db.Exec(ctx, updateUserRole, arg.Roles, arg.ID)
+	return err
+}

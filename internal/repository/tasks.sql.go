@@ -12,21 +12,22 @@ import (
 )
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO tasks (user_id, title, description, difficulty, passes, score, topics, course_id, is_public)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public
+INSERT INTO tasks (user_id, title, description, difficulty, passes, score, topics, course_id, is_public, verification_file)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public, verification_file
 `
 
 type CreateTaskParams struct {
-	UserID      int32       `json:"user_id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Difficulty  int32       `json:"difficulty"`
-	Passes      int32       `json:"passes"`
-	Score       float64     `json:"score"`
-	Topics      []int32     `json:"topics"`
-	CourseID    pgtype.Int4 `json:"course_id"`
-	IsPublic    bool        `json:"is_public"`
+	UserID           int32       `json:"user_id"`
+	Title            string      `json:"title"`
+	Description      string      `json:"description"`
+	Difficulty       int32       `json:"difficulty"`
+	Passes           int32       `json:"passes"`
+	Score            float64     `json:"score"`
+	Topics           []int32     `json:"topics"`
+	CourseID         pgtype.Int4 `json:"course_id"`
+	IsPublic         bool        `json:"is_public"`
+	VerificationFile pgtype.Text `json:"verification_file"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -40,6 +41,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.Topics,
 		arg.CourseID,
 		arg.IsPublic,
+		arg.VerificationFile,
 	)
 	var i Task
 	err := row.Scan(
@@ -55,6 +57,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.UpdatedAt,
 		&i.CourseID,
 		&i.IsPublic,
+		&i.VerificationFile,
 	)
 	return i, err
 }
@@ -70,7 +73,7 @@ func (q *Queries) DeleteTask(ctx context.Context, id int32) error {
 }
 
 const getTaskById = `-- name: GetTaskById :one
-SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public FROM tasks where id = $1
+SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public, verification_file FROM tasks where id = $1
 `
 
 func (q *Queries) GetTaskById(ctx context.Context, id int32) (Task, error) {
@@ -89,6 +92,7 @@ func (q *Queries) GetTaskById(ctx context.Context, id int32) (Task, error) {
 		&i.UpdatedAt,
 		&i.CourseID,
 		&i.IsPublic,
+		&i.VerificationFile,
 	)
 	return i, err
 }
@@ -103,7 +107,7 @@ func (q *Queries) IncreaseTaskPasses(ctx context.Context, id int32) error {
 }
 
 const listPublicTasks = `-- name: ListPublicTasks :many
-SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public FROM tasks WHERE is_public = true ORDER BY created_at DESC
+SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public, verification_file FROM tasks WHERE is_public = true ORDER BY created_at DESC
 `
 
 func (q *Queries) ListPublicTasks(ctx context.Context) ([]Task, error) {
@@ -128,6 +132,7 @@ func (q *Queries) ListPublicTasks(ctx context.Context) ([]Task, error) {
 			&i.UpdatedAt,
 			&i.CourseID,
 			&i.IsPublic,
+			&i.VerificationFile,
 		); err != nil {
 			return nil, err
 		}
@@ -140,7 +145,7 @@ func (q *Queries) ListPublicTasks(ctx context.Context) ([]Task, error) {
 }
 
 const listTasks = `-- name: ListTasks :many
-SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public FROM tasks
+SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public, verification_file FROM tasks
 `
 
 func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
@@ -165,6 +170,7 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 			&i.UpdatedAt,
 			&i.CourseID,
 			&i.IsPublic,
+			&i.VerificationFile,
 		); err != nil {
 			return nil, err
 		}
@@ -177,7 +183,7 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 }
 
 const listTasksByCourse = `-- name: ListTasksByCourse :many
-SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public FROM tasks WHERE course_id = $1 ORDER BY created_at DESC
+SELECT id, user_id, title, description, difficulty, passes, score, topics, created_at, updated_at, course_id, is_public, verification_file FROM tasks WHERE course_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListTasksByCourse(ctx context.Context, courseID pgtype.Int4) ([]Task, error) {
@@ -202,6 +208,7 @@ func (q *Queries) ListTasksByCourse(ctx context.Context, courseID pgtype.Int4) (
 			&i.UpdatedAt,
 			&i.CourseID,
 			&i.IsPublic,
+			&i.VerificationFile,
 		); err != nil {
 			return nil, err
 		}
@@ -215,20 +222,21 @@ func (q *Queries) ListTasksByCourse(ctx context.Context, courseID pgtype.Int4) (
 
 const updateTask = `-- name: UpdateTask :exec
 UPDATE tasks
-SET title = $2, description = $3, difficulty = $4, passes = $5, score = $6, topics = $7, course_id = $8, is_public = $9, updated_at = CURRENT_TIMESTAMP
+SET title = $2, description = $3, difficulty = $4, passes = $5, score = $6, topics = $7, course_id = $8, is_public = $9, verification_file = $10, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 `
 
 type UpdateTaskParams struct {
-	ID          int32       `json:"id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Difficulty  int32       `json:"difficulty"`
-	Passes      int32       `json:"passes"`
-	Score       float64     `json:"score"`
-	Topics      []int32     `json:"topics"`
-	CourseID    pgtype.Int4 `json:"course_id"`
-	IsPublic    bool        `json:"is_public"`
+	ID               int32       `json:"id"`
+	Title            string      `json:"title"`
+	Description      string      `json:"description"`
+	Difficulty       int32       `json:"difficulty"`
+	Passes           int32       `json:"passes"`
+	Score            float64     `json:"score"`
+	Topics           []int32     `json:"topics"`
+	CourseID         pgtype.Int4 `json:"course_id"`
+	IsPublic         bool        `json:"is_public"`
+	VerificationFile pgtype.Text `json:"verification_file"`
 }
 
 func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
@@ -242,6 +250,7 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
 		arg.Topics,
 		arg.CourseID,
 		arg.IsPublic,
+		arg.VerificationFile,
 	)
 	return err
 }
@@ -258,5 +267,19 @@ type UpdateTaskCourseAndVisibilityParams struct {
 
 func (q *Queries) UpdateTaskCourseAndVisibility(ctx context.Context, arg UpdateTaskCourseAndVisibilityParams) error {
 	_, err := q.db.Exec(ctx, updateTaskCourseAndVisibility, arg.ID, arg.CourseID, arg.IsPublic)
+	return err
+}
+
+const updateTaskVerificationFile = `-- name: UpdateTaskVerificationFile :exec
+UPDATE tasks SET verification_file = $2 WHERE id = $1
+`
+
+type UpdateTaskVerificationFileParams struct {
+	ID               int32       `json:"id"`
+	VerificationFile pgtype.Text `json:"verification_file"`
+}
+
+func (q *Queries) UpdateTaskVerificationFile(ctx context.Context, arg UpdateTaskVerificationFileParams) error {
+	_, err := q.db.Exec(ctx, updateTaskVerificationFile, arg.ID, arg.VerificationFile)
 	return err
 }

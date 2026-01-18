@@ -59,6 +59,7 @@ func (q *Queries) GetTaskListByFilter(ctx context.Context, filter TaskListFilter
 			&i.UpdatedAt,
 			&i.CourseID,
 			&i.IsPublic,
+			&i.VerificationFile,
 		); err != nil {
 			return nil, err
 		}

@@ -15,7 +15,7 @@ import (
 
 // tasksHandler handles HTTP requests related to tasks.
 type tasksHandler struct {
-	service *tasks.TaskService
+	service   *tasks.TaskService
 	testCases *test_cases.TestCasesService
 }
 
@@ -34,6 +34,7 @@ func (h *tasksHandler) RegisterRoutes(app fiber.Router, authMiddleware fiber.Han
 	taskGroup.Post("/", middleware.WrapJson(h.CreateTaskHandler), authMiddleware, middleware.AuthRequiredMiddleware)
 	taskGroup.Get("/", middleware.WrapQuery(h.ListTasksHandler))
 	taskGroup.Get("/:id", h.TaskById, authMiddleware)
+	taskGroup.Post("/:id/verification-file", h.UploadVerificationFileHandler, authMiddleware, middleware.AuthRequiredMiddleware)
 	taskGroup.Put("/:id", middleware.WrapJson(h.UpdateTaskHandler), authMiddleware)
 	taskGroup.Delete("/:id", h.DeleteTaskHandler, authMiddleware)
 }
@@ -59,7 +60,7 @@ func (h *tasksHandler) CreateTaskHandler(c fiber.Ctx, dto models.CreateTaskDTO) 
 		Difficulty:  dto.Difficulty,
 		Topics:      dto.Topics,
 	}
-	
+
 	task, err := h.service.CreateTask(c.Context(), params)
 	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
@@ -82,17 +83,17 @@ func (h *tasksHandler) CreateTaskHandler(c fiber.Ctx, dto models.CreateTaskDTO) 
 // @Router /tasks/{id} [get]
 func (h *tasksHandler) TaskById(c fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
-	
+
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid task ID format"})
 	}
 
 	task, err := h.service.TaskById(c.Context(), int32(id))
-	if err != nil{
+	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
 	}
 	resp := models.TaskByIdResponse{
-		Task:      task,
+		Task: task,
 	}
 	userID := middleware.UserIDFromContext(c)
 	if userID != nil && *userID == task.UserID {
@@ -112,7 +113,7 @@ func (h *tasksHandler) TaskById(c fiber.Ctx) error {
 // @Tags Tasks
 // @Accept json
 // @Produce json
-// @Param title query string false "Filter by title" 
+// @Param title query string false "Filter by title"
 // @Param topics query []int false "Filter by topic IDs" collectionFormat(csv)
 // @Param difficulties query []int false "Filter by difficulty levels" collectionFormat(csv)
 // @Param sort query string false "Sort order (e.g., name, difficulty, score)" Enums(name, difficulty, score)
@@ -123,7 +124,7 @@ func (h *tasksHandler) TaskById(c fiber.Ctx) error {
 // @Failure 401 {object} apierror.ApiError "Unauthorized"
 // @Failure 500 {object} apierror.ApiError "Internal server error"
 // @Router /tasks [get]
-func (h *tasksHandler) ListTasksHandler(c fiber.Ctx, filter db.TaskListFilter ) error {
+func (h *tasksHandler) ListTasksHandler(c fiber.Ctx, filter db.TaskListFilter) error {
 	tasks, err := h.service.ListTasksByFilter(c.Context(), filter)
 	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
@@ -149,13 +150,13 @@ func (h *tasksHandler) ListTasksHandler(c fiber.Ctx, filter db.TaskListFilter ) 
 // @Router /tasks/{id} [put]
 func (h *tasksHandler) UpdateTaskHandler(c fiber.Ctx, arg db.UpdateTaskParams) error {
 	id, err := strconv.Atoi(c.Params("id"))
-	
+
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid task ID format"})
 	}
 
 	arg.ID = int32(id)
-	
+
 	err = h.service.UpdateTask(c.Context(), arg)
 	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
@@ -180,7 +181,7 @@ func (h *tasksHandler) UpdateTaskHandler(c fiber.Ctx, arg db.UpdateTaskParams) e
 // @Router /tasks/{id} [delete]
 func (h *tasksHandler) DeleteTaskHandler(c fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
-	
+
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid task ID format"})
 	}
@@ -191,4 +192,46 @@ func (h *tasksHandler) DeleteTaskHandler(c fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// UploadVerificationFileHandler godoc
+// @Summary Upload verification file
+// @Description Uploads a verification file for a task.
+// @Tags Tasks
+// @Accept multipart/form-data
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "Task ID"
+// @Param file formData file true "Verification file"
+// @Success 200 "File uploaded successfully"
+// @Failure 400 {object} apierror.ApiError
+// @Failure 401 {object} apierror.ApiError
+// @Failure 403 {object} apierror.ApiError
+// @Failure 404 {object} apierror.ApiError
+// @Failure 500 {object} apierror.ApiError
+// @Router /tasks/{id}/verification-file [post]
+func (h *tasksHandler) UploadVerificationFileHandler(c fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid task ID format"})
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing file"})
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to open file"})
+	}
+	defer f.Close()
+
+	userID := middleware.UserIDFromContext(c)
+	err = h.service.UploadVerificationFile(c.Context(), int32(id), *userID, f, file.Size)
+	if err != nil {
+		return apierror.CheckApiErrorAndSend(err, c)
+	}
+
+	return c.SendStatus(fiber.StatusOK)
 }

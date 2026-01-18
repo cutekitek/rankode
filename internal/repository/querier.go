@@ -25,6 +25,7 @@ type Querier interface {
 	CreateAttempt(ctx context.Context, arg CreateAttemptParams) (Attempt, error)
 	CreateCourse(ctx context.Context, arg CreateCourseParams) (Course, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
+	CreateLtiLink(ctx context.Context, arg CreateLtiLinkParams) error
 	CreateOrUpdateGrade(ctx context.Context, arg CreateOrUpdateGradeParams) (Grade, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateTaskTestCase(ctx context.Context, arg CreateTaskTestCaseParams) (TaskTestCase, error)
@@ -50,6 +51,7 @@ type Querier interface {
 	GetGradesForAssignment(ctx context.Context, assignmentID int32) ([]GetGradesForAssignmentRow, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupsForStudent(ctx context.Context, arg GetGroupsForStudentParams) ([]Group, error)
+	GetLtiUser(ctx context.Context, arg GetLtiUserParams) (LtiUser, error)
 	GetStudentGradesForAssignment(ctx context.Context, arg GetStudentGradesForAssignmentParams) ([]GetStudentGradesForAssignmentRow, error)
 	GetStudentGradesForCourse(ctx context.Context, arg GetStudentGradesForCourseParams) ([]GetStudentGradesForCourseRow, error)
 	GetTaskById(ctx context.Context, id int32) (Task, error)
@@ -87,7 +89,9 @@ type Querier interface {
 	UpdateTask(ctx context.Context, arg UpdateTaskParams) error
 	UpdateTaskCourseAndVisibility(ctx context.Context, arg UpdateTaskCourseAndVisibilityParams) error
 	UpdateTaskOrderAndWeight(ctx context.Context, arg UpdateTaskOrderAndWeightParams) error
+	UpdateTaskVerificationFile(ctx context.Context, arg UpdateTaskVerificationFileParams) error
 	UpdateTopicsCounters(ctx context.Context, arg UpdateTopicsCountersParams) error
+	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 }
 
 var _ Querier = (*Queries)(nil)

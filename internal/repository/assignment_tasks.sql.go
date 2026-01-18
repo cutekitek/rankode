@@ -72,7 +72,7 @@ func (q *Queries) GetAssignmentForTask(ctx context.Context, taskID int32) (Assig
 }
 
 const getTasksForAssignment = `-- name: GetTasksForAssignment :many
-SELECT t.id, t.user_id, t.title, t.description, t.difficulty, t.passes, t.score, t.topics, t.created_at, t.updated_at, t.course_id, t.is_public, at.order_index, at.weight
+SELECT t.id, t.user_id, t.title, t.description, t.difficulty, t.passes, t.score, t.topics, t.created_at, t.updated_at, t.course_id, t.is_public, t.verification_file, at.order_index, at.weight
 FROM tasks t
 JOIN assignment_tasks at ON t.id = at.task_id
 WHERE at.assignment_id = $1
@@ -80,20 +80,21 @@ ORDER BY at.order_index
 `
 
 type GetTasksForAssignmentRow struct {
-	ID          int32            `json:"id"`
-	UserID      int32            `json:"user_id"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	Difficulty  int32            `json:"difficulty"`
-	Passes      int32            `json:"passes"`
-	Score       float64          `json:"score"`
-	Topics      []int32          `json:"topics"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
-	CourseID    pgtype.Int4      `json:"course_id"`
-	IsPublic    bool             `json:"is_public"`
-	OrderIndex  int32            `json:"order_index"`
-	Weight      pgtype.Numeric   `json:"weight"`
+	ID               int32            `json:"id"`
+	UserID           int32            `json:"user_id"`
+	Title            string           `json:"title"`
+	Description      string           `json:"description"`
+	Difficulty       int32            `json:"difficulty"`
+	Passes           int32            `json:"passes"`
+	Score            float64          `json:"score"`
+	Topics           []int32          `json:"topics"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+	CourseID         pgtype.Int4      `json:"course_id"`
+	IsPublic         bool             `json:"is_public"`
+	VerificationFile pgtype.Text      `json:"verification_file"`
+	OrderIndex       int32            `json:"order_index"`
+	Weight           pgtype.Numeric   `json:"weight"`
 }
 
 func (q *Queries) GetTasksForAssignment(ctx context.Context, assignmentID int32) ([]GetTasksForAssignmentRow, error) {
@@ -118,6 +119,7 @@ func (q *Queries) GetTasksForAssignment(ctx context.Context, assignmentID int32)
 			&i.UpdatedAt,
 			&i.CourseID,
 			&i.IsPublic,
+			&i.VerificationFile,
 			&i.OrderIndex,
 			&i.Weight,
 		); err != nil {

@@ -26,14 +26,14 @@ const (
 )
 
 type AttemptRequest struct {
-	Id            int64  `json:"id"`
-	Language      string `json:"language"`
-	Code          string `json:"code"`
-	MemoryLimit   int64  `json:"memory_limit"`
-	Timeout       int64  `json:"timeout"`
-	MaxOutputSize int64  `json:"max_output_size"`
-
-	TestCases []TestCase `json:"test_cases"`
+	Id               int64      `json:"id"`
+	Language         string     `json:"language"`
+	Code             string     `json:"code"`
+	MemoryLimit      int64      `json:"memory_limit"`
+	Timeout          int64      `json:"timeout"`
+	MaxOutputSize    int64      `json:"max_output_size"`
+	VerificationFile string     `json:"verification_file"`
+	TestCases        []TestCase `json:"test_cases"`
 }
 
 type TestCase struct {

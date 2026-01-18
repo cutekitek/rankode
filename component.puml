@@ -1,0 +1,74 @@
+@startuml
+skinparam componentStyle uml2
+
+package "Frontend (React)" {
+    component "App.tsx <<file>>" as spa
+}
+
+package "Backend (Go Fiber)" {
+    component "main.go <<file>>" as main {
+        port "HTTP" as p_http
+        port "MQ" as p_mq
+    }
+
+    component "handlers.go <<file>>" as handlers
+    component "services.go <<file>>" as services
+    component "repository.go <<file>>" as repo
+    component "runner.go <<file>>" as mq_runner
+    component "validator.go <<file>>" as validator
+    component "files.go <<file>>" as file_service
+}
+
+package "Infrastructure" {
+    database "rankode_db <<database>>" as db {
+        [tasks <<table>>]
+        [attempts <<table>>]
+        [users <<table>>]
+    }
+    component "rabbitmq <<executable>>" as rabbit
+    component "minio <<executable>>" as minio
+}
+
+package "External" {
+    component "executor.py <<file>>" as executor
+}
+
+' Интерфейсы
+interface "IHttpApi" as IHttp
+interface "IBusinessLogic" as ILogic
+interface "IDataAccess" as IData
+interface "IMessageQueue" as IMq
+interface "IValidation" as IVal
+interface "IObjectStorage" as IS3
+
+' Связи через интерфейсы (Ball-and-Socket)
+spa --( IHttp
+p_http - IHttp
+
+main ..> handlers : <<use>>
+handlers --( ILogic
+services - ILogic
+
+services --( IData
+repo - IData
+
+repo --( "SQL"
+db - "SQL"
+
+services --( IMq
+p_mq - IMq
+rabbit - IMq
+
+mq_runner --( IMq
+mq_runner --( IVal
+validator - IVal
+
+validator --( IData
+validator --( IS3
+file_service --( IS3
+minio - IS3
+
+rabbit --( "AMQP"
+executor - "AMQP"
+
+@enduml

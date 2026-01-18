@@ -87,19 +87,29 @@ type Language struct {
 	Name string `json:"name"`
 }
 
+type LtiUser struct {
+	ID              int32            `json:"id"`
+	UserID          int32            `json:"user_id"`
+	LtiSubject      string           `json:"lti_subject"`
+	LtiIssuer       string           `json:"lti_issuer"`
+	LtiDeploymentID pgtype.Text      `json:"lti_deployment_id"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+}
+
 type Task struct {
-	ID          int32            `json:"id"`
-	UserID      int32            `json:"user_id"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	Difficulty  int32            `json:"difficulty"`
-	Passes      int32            `json:"passes"`
-	Score       float64          `json:"score"`
-	Topics      []int32          `json:"topics"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
-	CourseID    pgtype.Int4      `json:"course_id"`
-	IsPublic    bool             `json:"is_public"`
+	ID               int32            `json:"id"`
+	UserID           int32            `json:"user_id"`
+	Title            string           `json:"title"`
+	Description      string           `json:"description"`
+	Difficulty       int32            `json:"difficulty"`
+	Passes           int32            `json:"passes"`
+	Score            float64          `json:"score"`
+	Topics           []int32          `json:"topics"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+	CourseID         pgtype.Int4      `json:"course_id"`
+	IsPublic         bool             `json:"is_public"`
+	VerificationFile pgtype.Text      `json:"verification_file"`
 }
 
 type TaskTestCase struct {
