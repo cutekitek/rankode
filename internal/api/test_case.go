@@ -19,7 +19,7 @@ type testCasesHandler struct {
 // NewTestCasesHandler creates a new instance of testCasesHandler.
 func NewTestCasesHandler(service *test_cases.TestCasesService) *testCasesHandler {
 	return &testCasesHandler{service: service}
-} 
+}
 
 // RegisterRoutes registers the test case-related routes with the Fiber app.
 func (h *testCasesHandler) RegisterRoutes(app fiber.Router, auth fiber.Handler) {
@@ -60,7 +60,7 @@ func (h *testCasesHandler) NewTestCaseHandler(c fiber.Ctx, req models.NewTestCas
 // @Produce json
 // @Security ApiKeyAuth
 // @Param id path int true "Test Case ID"
-// @Param type query string true "Upload type" 
+// @Param type query string true "Upload type"
 // @Param file formData file true "Test case file"
 // @Success 200 "File uploaded successfully"
 // @Failure 400 {object} apierror.ApiError
@@ -73,7 +73,7 @@ func (h *testCasesHandler) UploadTestCaseFileHandler(c fiber.Ctx, req models.Upl
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid test case ID"})
 	}
-	
+
 	file, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing file"})
@@ -90,7 +90,7 @@ func (h *testCasesHandler) UploadTestCaseFileHandler(c fiber.Ctx, req models.Upl
 		UserID:     int(*userID),
 		TestCaseID: int32(testCaseID),
 		FileSize:   file.Size,
-		Type: req.Type,
+		Type:       req.Type,
 		Reader:     f,
 	}
 	err = h.service.UploadTestCaseFile(c.Context(), params)

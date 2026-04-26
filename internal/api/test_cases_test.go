@@ -30,13 +30,13 @@ func TestTestCasesHandlers(t *testing.T) {
 
 	regDto := models.CreateUserDTO{Username: username, Email: email, Password: password}
 	regBody, _ := json.Marshal(regDto)
-	req, _ := http.NewRequest("POST", "/api/auth/register", bytes.NewBuffer(regBody))
+	req, _ := http.NewRequest("POST", testEndpoint("/api/auth/register"), bytes.NewBuffer(regBody))
 	req.Header.Set("Content-Type", "application/json")
 	ta.App.Test(req)
 
 	loginDto := models.AuthUserDTO{Identifier: email, Password: password}
 	loginBody, _ := json.Marshal(loginDto)
-	req, _ = http.NewRequest("POST", "/api/auth/login", bytes.NewBuffer(loginBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/auth/login"), bytes.NewBuffer(loginBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := ta.App.Test(req)
 	var loginResult map[string]string
@@ -46,7 +46,7 @@ func TestTestCasesHandlers(t *testing.T) {
 	// Create a task
 	taskDto := models.CreateTaskDTO{Title: "Test Task"}
 	taskBody, _ := json.Marshal(taskDto)
-	req, _ = http.NewRequest("POST", "/api/tasks/", bytes.NewBuffer(taskBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/tasks/"), bytes.NewBuffer(taskBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
@@ -59,7 +59,7 @@ func TestTestCasesHandlers(t *testing.T) {
 			TaskID: taskID,
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/test-cases/", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/test-cases/"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 

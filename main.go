@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
-	"io/fs"
-
 	"log"
 	"log/slog"
 	"os/signal"
@@ -31,11 +28,8 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/logger"
-	"github.com/gofiber/fiber/v3/middleware/static"
 )
 
-//go:embed frontend/dist/*
-var staticEmbed embed.FS
 
 // @title           Rankode
 // @version         1.0
@@ -66,6 +60,11 @@ func main() {
 
 	execer := db.New(pgPool)
 	fileStorage := files.NewFileStorage(cfg)
+	for _, bucket := range []string{"tasks", "verification"} {
+		if err := fileStorage.EnsureBucket(ctx, bucket); err != nil {
+			log.Fatalf("failed to initialize bucket %s: %v", bucket, err)
+		}
+	}
 	execer.CreateTopic(ctx, "test")
 	usersService := users.NewUserService(execer)
 	authService := auth.NewAuthService(cfg)
@@ -104,13 +103,6 @@ func main() {
 	app.Use(compress.New())
 	app.Use(logger.New())
 
-	staticFS, err := fs.Sub(staticEmbed, "frontend/dist")
-	if err != nil {
-		panic(err)
-	}
-	app.Use("/", static.New("", static.Config{
-		FS: staticFS,
-	}))
 
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 	apiGroup := app.Group("/api")
@@ -125,12 +117,6 @@ func main() {
 	api.NewAssignmentsHandler(assignmentsService).RegisterRoutes(apiGroup, authMiddleware)
 	api.NewGradesHandler(gradesService).RegisterRoutes(apiGroup, authMiddleware)
 	api.NewGroupsHandler(groupsService).RegisterRoutes(apiGroup, authMiddleware)
-
-	app.Use(func(c fiber.Ctx) error {
-		return c.SendFile("index.html", fiber.SendFile{
-			FS: staticFS,
-		})
-	})
 	slog.Info("HTTP server started", "listenAddr", cfg.ListenAddr)
 	app.Listen(cfg.ListenAddr)
 	<-ctx.Done()

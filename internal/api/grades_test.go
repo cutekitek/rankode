@@ -31,13 +31,13 @@ func TestGradesHandlers(t *testing.T) {
 
 	regDto := models.CreateUserDTO{Username: username, Email: email, Password: password}
 	regBody, _ := json.Marshal(regDto)
-	req, _ := http.NewRequest("POST", "/api/auth/register", bytes.NewBuffer(regBody))
+	req, _ := http.NewRequest("POST", testEndpoint("/api/auth/register"), bytes.NewBuffer(regBody))
 	req.Header.Set("Content-Type", "application/json")
 	ta.App.Test(req)
 
 	loginDto := models.AuthUserDTO{Identifier: email, Password: password}
 	loginBody, _ := json.Marshal(loginDto)
-	req, _ = http.NewRequest("POST", "/api/auth/login", bytes.NewBuffer(loginBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/auth/login"), bytes.NewBuffer(loginBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := ta.App.Test(req)
 	var loginResult map[string]string
@@ -49,7 +49,7 @@ func TestGradesHandlers(t *testing.T) {
 	// Create a course
 	courseDto := models.CreateCourseDTO{Name: "Test Course"}
 	courseBody, _ := json.Marshal(courseDto)
-	req, _ = http.NewRequest("POST", "/api/courses/", bytes.NewBuffer(courseBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/courses/"), bytes.NewBuffer(courseBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
@@ -58,7 +58,7 @@ func TestGradesHandlers(t *testing.T) {
 	json.NewDecoder(resp.Body).Decode(&course)
 
 	// Enroll as student
-	req, _ = http.NewRequest("POST", fmt.Sprintf("/api/courses/%d/enroll", course.ID), nil)
+	req, _ = http.NewRequest("POST", testEndpoint(fmt.Sprintf("/api/courses/%d/enroll", course.ID)), nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -66,7 +66,7 @@ func TestGradesHandlers(t *testing.T) {
 	// Create a task
 	taskDto := models.CreateTaskDTO{Title: "Test Task"}
 	taskBody, _ := json.Marshal(taskDto)
-	req, _ = http.NewRequest("POST", "/api/tasks/", bytes.NewBuffer(taskBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/tasks/"), bytes.NewBuffer(taskBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
@@ -78,7 +78,7 @@ func TestGradesHandlers(t *testing.T) {
 	maxAttempts := int32(10)
 	assignDto := models.CreateAssignmentDTO{CourseID: course.ID, Title: "Test Assignment", MaxAttemptsPerTask: &maxAttempts}
 	assignBody, _ := json.Marshal(assignDto)
-	req, _ = http.NewRequest("POST", "/api/assignments/", bytes.NewBuffer(assignBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/assignments/"), bytes.NewBuffer(assignBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
@@ -89,7 +89,7 @@ func TestGradesHandlers(t *testing.T) {
 	// Add task to assignment
 	addTaskDto := models.AddTaskToAssignmentDTO{TaskID: task.ID, OrderIndex: 1, Weight: 1.0}
 	addTaskBody, _ := json.Marshal(addTaskDto)
-	req, _ = http.NewRequest("POST", fmt.Sprintf("/api/assignments/%d/tasks", assign.ID), bytes.NewBuffer(addTaskBody))
+	req, _ = http.NewRequest("POST", testEndpoint(fmt.Sprintf("/api/assignments/%d/tasks", assign.ID)), bytes.NewBuffer(addTaskBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
@@ -104,7 +104,7 @@ func TestGradesHandlers(t *testing.T) {
 			Feedback:     "Excellent",
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/grades/", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/grades/"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -122,7 +122,7 @@ func TestGradesHandlers(t *testing.T) {
 	})
 
 	t.Run("ListGrades", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/grades/?assignment_id=%d", assign.ID), nil)
+		req, _ := http.NewRequest("GET", testEndpoint(fmt.Sprintf("/api/grades/?assignment_id=%d", assign.ID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)

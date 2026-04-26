@@ -19,7 +19,7 @@ func TestTopicsHandler(t *testing.T) {
 	defer ta.DB.Close()
 
 	t.Run("ListTopics", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/topics/", nil)
+		req, _ := http.NewRequest("GET", testEndpoint("/api/topics/"), nil)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)

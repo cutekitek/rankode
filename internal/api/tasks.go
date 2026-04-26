@@ -29,7 +29,7 @@ func NewTasksHandler(service *tasks.TaskService, testCases *test_cases.TestCases
 
 // RegisterRoutes registers the task-related routes with the Fiber app.
 func (h *tasksHandler) RegisterRoutes(app fiber.Router, authMiddleware fiber.Handler) {
-	taskGroup := app.Group("/tasks")
+	taskGroup := app.Group("/tasks").Use(authMiddleware)
 
 	taskGroup.Post("/", middleware.WrapJson(h.CreateTaskHandler), authMiddleware, middleware.AuthRequiredMiddleware)
 	taskGroup.Get("/", middleware.WrapQuery(h.ListTasksHandler))

@@ -31,14 +31,14 @@ func TestCoursesHandlers(t *testing.T) {
 	// Register
 	regDto := models.CreateUserDTO{Username: username, Email: email, Password: password}
 	regBody, _ := json.Marshal(regDto)
-	req, _ := http.NewRequest("POST", "/api/auth/register", bytes.NewBuffer(regBody))
+	req, _ := http.NewRequest("POST", testEndpoint("/api/auth/register"), bytes.NewBuffer(regBody))
 	req.Header.Set("Content-Type", "application/json")
 	ta.App.Test(req)
 
 	// Login
 	loginDto := models.AuthUserDTO{Identifier: email, Password: password}
 	loginBody, _ := json.Marshal(loginDto)
-	req, _ = http.NewRequest("POST", "/api/auth/login", bytes.NewBuffer(loginBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/auth/login"), bytes.NewBuffer(loginBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := ta.App.Test(req)
 	var loginResult map[string]string
@@ -53,7 +53,7 @@ func TestCoursesHandlers(t *testing.T) {
 			Description: "Test Description",
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/courses/", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/courses/"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -68,7 +68,7 @@ func TestCoursesHandlers(t *testing.T) {
 	})
 
 	t.Run("ListCourses", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/courses/", nil)
+		req, _ := http.NewRequest("GET", testEndpoint("/api/courses/"), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
@@ -80,7 +80,7 @@ func TestCoursesHandlers(t *testing.T) {
 	})
 
 	t.Run("GetCourseByID", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/courses/%d", courseID), nil)
+		req, _ := http.NewRequest("GET", testEndpoint(fmt.Sprintf("/api/courses/%d", courseID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
@@ -93,7 +93,7 @@ func TestCoursesHandlers(t *testing.T) {
 			Description: "Updated Description",
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/courses/%d", courseID), bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", testEndpoint(fmt.Sprintf("/api/courses/%d", courseID)), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -103,7 +103,7 @@ func TestCoursesHandlers(t *testing.T) {
 	})
 
 	t.Run("DeleteCourse", func(t *testing.T) {
-		req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/courses/%d", courseID), nil)
+		req, _ := http.NewRequest("DELETE", testEndpoint(fmt.Sprintf("/api/courses/%d", courseID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		resp, err := ta.App.Test(req)

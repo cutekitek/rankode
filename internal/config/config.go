@@ -11,20 +11,20 @@ import (
 
 type Config struct {
 	PostgresString   string `env:"POSTGRES_DBSTRING" env-required:"true"`
-	MinIOHost        string `env:"MINIO_HOST" env-required:"true"`
-	MinIOLogin       string `env:"MINIO_LOGIN" env-required:"true"`
-	MinIOPassword    string `env:"MINIO_PASSWORD" env-required:"true"`
+	S3Endpoint       string `env:"S3_ENDPOINT" env-required:"true"`
+	S3AccessKey      string `env:"S3_ACCESS_KEY" env-required:"true"`
+	S3SecretKey      string `env:"S3_SECRET_KEY" env-required:"true"`
 	RabbitMQHost     string `env:"RABBIT_HOST" env-required:"true"`
 	RabbitMQPort     int    `env:"RABBIT_PORT" env-default:"5672"`
 	RabbitMQLogin    string `env:"RABBIT_USER" env-required:"true"`
 	RabbitMQPassword string `env:"RABBIT_PASSWORD" env-required:"true"`
-	ListenAddr       string `env:"LISTEN_ADDR" env-default:"4000"`
-	JWTSecret        string `env:"JWT_SECRET" env-required:"true"`
-	LTIIssuer        string `env:"LTI_ISSUER" env-required:"false"`
-	LTIAuthURL       string `env:"LTI_AUTH_URL" env-required:"false"`
-	LTITokenURL      string `env:"LTI_TOKEN_URL" env-required:"false"`
-	LTIJWKSURL       string `env:"LTI_JWKS_URL" env-required:"false"`
-	LTIClientID      string `env:"LTI_CLIENT_ID" env-required:"false"`
+	ListenAddr       string `env:"LISTEN_ADDR" env-default:"0.0.0.0:4000"`
+	JWTSecret        string `env:"JWT_SECRET"`
+	LTIIssuer        string `env:"LTI_ISSUER"`
+	LTIAuthURL       string `env:"LTI_AUTH_URL"`
+	LTITokenURL      string `env:"LTI_TOKEN_URL"`
+	LTIJWKSURL       string `env:"LTI_JWKS_URL"`
+	LTIClientID      string `env:"LTI_CLIENT_ID"`
 }
 
 func NewConfig() (*Config, error) {

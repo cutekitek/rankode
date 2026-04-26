@@ -41,9 +41,9 @@ func setupTestApp(ctx context.Context) (*testApp, error) {
 	cfg := &config.Config{
 		PostgresString: "postgres://rankode:fobeagTB8Ojo3R@localhost:5432/rankode?sslmode=disable",
 		JWTSecret:      "test_secret",
-		MinIOHost:      "localhost:9000",
-		MinIOLogin:     "tasks",
-		MinIOPassword:  "fobeagTB8Ojo3R",
+		S3Endpoint:     "localhost:8333",
+		S3AccessKey:    "tasks",
+		S3SecretKey:    "fobeagTB8Ojo3R",
 	}
 
 	pgPool, err := pgxpool.New(ctx, cfg.PostgresString)
@@ -93,4 +93,8 @@ func setupTestApp(ctx context.Context) (*testApp, error) {
 		TaskService:      taskService,
 		TestCasesService: testCasesService,
 	}, nil
+}
+
+func testEndpoint(path string) string {
+	return "http://127.0.0.1" + path
 }

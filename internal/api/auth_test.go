@@ -33,7 +33,7 @@ func TestAuthHandlers(t *testing.T) {
 			Password: password,
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/auth/register", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/auth/register"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := ta.App.Test(req)
@@ -47,7 +47,7 @@ func TestAuthHandlers(t *testing.T) {
 			Password:   password,
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/auth/login", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/auth/login"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := ta.App.Test(req)

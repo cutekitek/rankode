@@ -26,7 +26,7 @@ func NewAuthMiddleware(authService *auth.AuthService) fiber.Handler {
 func AuthRequiredMiddleware(c fiber.Ctx) error {
 	userId := c.Locals("user_id")
 	if userId == nil {
-		c.SendStatus(fiber.StatusUnauthorized)
+		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	return c.Next()
 }

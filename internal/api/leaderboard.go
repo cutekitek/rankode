@@ -1,7 +1,7 @@
 package api
 
 import (
-	"rankode/internal/errors"   
+	"rankode/internal/errors"
 	"rankode/internal/services/users"
 
 	"github.com/gofiber/fiber/v3"

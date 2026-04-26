@@ -19,7 +19,7 @@ func TestLeaderboardHandler(t *testing.T) {
 	defer ta.DB.Close()
 
 	t.Run("GetLeaderboard", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/leaderboard", nil)
+		req, _ := http.NewRequest("GET", testEndpoint("/api/leaderboard"), nil)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)

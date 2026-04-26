@@ -21,9 +21,8 @@ func (h *topicsHandler) RegisterRoutes(app fiber.Router, authMiddleware fiber.Ha
 	taskGroup := app.Group("/topics")
 
 	taskGroup.Get("/", middleware.WrapQuery(h.ListTopicsHandler))
-	taskGroup.Post("/", middleware.WrapJson(h.AddTopicHandler), authMiddleware, middleware.AuthRequiredMiddleware, )
+	taskGroup.Post("/", middleware.WrapJson(h.AddTopicHandler), authMiddleware, middleware.AuthRequiredMiddleware)
 }
-
 
 // ListTopics godoc
 // @Summary List tasks
@@ -39,7 +38,7 @@ func (h *topicsHandler) RegisterRoutes(app fiber.Router, authMiddleware fiber.Ha
 func (h *topicsHandler) ListTopicsHandler(c fiber.Ctx, dto models.ListTopicsDTO) error {
 	topics, err := h.service.ListTopics(c.Context(), dto)
 
-	if err != nil{
+	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
 	}
 	return c.Status(fiber.StatusOK).JSON(topics)
@@ -58,7 +57,7 @@ func (h *topicsHandler) ListTopicsHandler(c fiber.Ctx, dto models.ListTopicsDTO)
 // @Router /topics [post]
 func (h *topicsHandler) AddTopicHandler(c fiber.Ctx, dto models.AddTopicDTO) error {
 	topic, err := h.service.AddTopic(c.Context(), dto.Name)
-	if err != nil{
+	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
 	}
 	return c.Status(fiber.StatusOK).JSON(topic)

@@ -31,13 +31,13 @@ func TestAssignmentsHandlers(t *testing.T) {
 
 	regDto := models.CreateUserDTO{Username: username, Email: email, Password: password}
 	regBody, _ := json.Marshal(regDto)
-	req, _ := http.NewRequest("POST", "/api/auth/register", bytes.NewBuffer(regBody))
+	req, _ := http.NewRequest("POST", testEndpoint("/api/auth/register"), bytes.NewBuffer(regBody))
 	req.Header.Set("Content-Type", "application/json")
 	ta.App.Test(req)
 
 	loginDto := models.AuthUserDTO{Identifier: email, Password: password}
 	loginBody, _ := json.Marshal(loginDto)
-	req, _ = http.NewRequest("POST", "/api/auth/login", bytes.NewBuffer(loginBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/auth/login"), bytes.NewBuffer(loginBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := ta.App.Test(req)
 	var loginResult map[string]string
@@ -47,7 +47,7 @@ func TestAssignmentsHandlers(t *testing.T) {
 	// Create a course
 	courseDto := models.CreateCourseDTO{Name: "Test Course"}
 	courseBody, _ := json.Marshal(courseDto)
-	req, _ = http.NewRequest("POST", "/api/courses/", bytes.NewBuffer(courseBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/courses/"), bytes.NewBuffer(courseBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
@@ -68,7 +68,7 @@ func TestAssignmentsHandlers(t *testing.T) {
 			MaxAttemptsPerTask: &maxAttempts,
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/assignments/", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/assignments/"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -86,7 +86,7 @@ func TestAssignmentsHandlers(t *testing.T) {
 	})
 
 	t.Run("ListAssignments", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/assignments/?course_id=%d", courseID), nil)
+		req, _ := http.NewRequest("GET", testEndpoint(fmt.Sprintf("/api/assignments/?course_id=%d", courseID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
@@ -94,7 +94,7 @@ func TestAssignmentsHandlers(t *testing.T) {
 	})
 
 	t.Run("GetAssignmentByID", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/assignments/%d", assignmentID), nil)
+		req, _ := http.NewRequest("GET", testEndpoint(fmt.Sprintf("/api/assignments/%d", assignmentID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
@@ -108,7 +108,7 @@ func TestAssignmentsHandlers(t *testing.T) {
 			MaxAttemptsPerTask: &maxAttempts,
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/assignments/%d", assignmentID), bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", testEndpoint(fmt.Sprintf("/api/assignments/%d", assignmentID)), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -118,7 +118,7 @@ func TestAssignmentsHandlers(t *testing.T) {
 	})
 
 	t.Run("DeleteAssignment", func(t *testing.T) {
-		req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/assignments/%d", assignmentID), nil)
+		req, _ := http.NewRequest("DELETE", testEndpoint(fmt.Sprintf("/api/assignments/%d", assignmentID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		resp, err := ta.App.Test(req)

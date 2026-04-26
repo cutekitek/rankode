@@ -3,8 +3,8 @@ package api
 import (
 	"fmt"
 	"rankode/internal/errors"
-	"rankode/internal/middleware" 
-	"rankode/internal/models"  
+	"rankode/internal/middleware"
+	"rankode/internal/models"
 	"rankode/internal/services/auth"
 	"rankode/internal/services/users"
 
@@ -13,7 +13,7 @@ import (
 
 type authHandler struct {
 	usersService *users.UserService
-	authService *auth.AuthService
+	authService  *auth.AuthService
 }
 
 func NewAuthHandler(users *users.UserService, auth *auth.AuthService) *authHandler {
@@ -28,7 +28,6 @@ func (h *authHandler) RegisterRoutes(app fiber.Router) {
 
 	authGroup.Post("/register", middleware.WrapJson(h.RegisterHandler))
 	authGroup.Post("/login", middleware.WrapJson(h.AuthenticateHandler))
-
 
 }
 
@@ -53,7 +52,6 @@ func (h *authHandler) RegisterHandler(c fiber.Ctx, dto models.CreateUserDTO) err
 	return c.Status(fiber.StatusCreated).JSON(user)
 }
 
-
 // AuthenticateHandler godoc
 // @Summary Authenticate user and get token
 // @Description Authenticates a user with email/username and password and returns a JWT upon success.
@@ -74,11 +72,11 @@ func (h *authHandler) AuthenticateHandler(c fiber.Ctx, dto models.AuthUserDTO) e
 	}
 
 	token, err := h.authService.GenerateToken(user)
-	if err != nil{
+	if err != nil {
 		return apierror.CheckApiErrorAndSend(err, c)
 	}
 	fmt.Println("auth")
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"token":   token,
+		"token": token,
 	})
 }

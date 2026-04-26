@@ -31,14 +31,14 @@ func TestTasksHandlers(t *testing.T) {
 	// Register
 	regDto := models.CreateUserDTO{Username: username, Email: email, Password: password}
 	regBody, _ := json.Marshal(regDto)
-	req, _ := http.NewRequest("POST", "/api/auth/register", bytes.NewBuffer(regBody))
+	req, _ := http.NewRequest("POST", testEndpoint("/api/auth/register"), bytes.NewBuffer(regBody))
 	req.Header.Set("Content-Type", "application/json")
 	ta.App.Test(req)
 
 	// Login
 	loginDto := models.AuthUserDTO{Identifier: email, Password: password}
 	loginBody, _ := json.Marshal(loginDto)
-	req, _ = http.NewRequest("POST", "/api/auth/login", bytes.NewBuffer(loginBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/auth/login"), bytes.NewBuffer(loginBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := ta.App.Test(req)
 	var loginResult map[string]string
@@ -55,7 +55,7 @@ func TestTasksHandlers(t *testing.T) {
 			Topics:      []int32{},
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/tasks/", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/tasks/"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -70,7 +70,8 @@ func TestTasksHandlers(t *testing.T) {
 	})
 
 	t.Run("ListTasks", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/tasks/?limit=10", nil)
+		req, _ := http.NewRequest("GET", testEndpoint("/api/tasks/?limit=10"), nil)
+		req.Header.Set("Authorization", "Bearer "+token)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -81,7 +82,7 @@ func TestTasksHandlers(t *testing.T) {
 	})
 
 	t.Run("GetTaskByID", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/tasks/%d", taskID), nil)
+		req, _ := http.NewRequest("GET", testEndpoint(fmt.Sprintf("/api/tasks/%d", taskID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		resp, err := ta.App.Test(req)
 		assert.NoError(t, err)
@@ -100,7 +101,7 @@ func TestTasksHandlers(t *testing.T) {
 			Topics:      []int32{},
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/tasks/%d", taskID), bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", testEndpoint(fmt.Sprintf("/api/tasks/%d", taskID)), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -110,7 +111,7 @@ func TestTasksHandlers(t *testing.T) {
 	})
 
 	t.Run("DeleteTask", func(t *testing.T) {
-		req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/tasks/%d", taskID), nil)
+		req, _ := http.NewRequest("DELETE", testEndpoint(fmt.Sprintf("/api/tasks/%d", taskID)), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		resp, err := ta.App.Test(req)

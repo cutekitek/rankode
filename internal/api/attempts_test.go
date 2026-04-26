@@ -30,15 +30,18 @@ func TestAttemptsHandlers(t *testing.T) {
 
 	regDto := models.CreateUserDTO{Username: username, Email: email, Password: password}
 	regBody, _ := json.Marshal(regDto)
-	req, _ := http.NewRequest("POST", "/api/auth/register", bytes.NewBuffer(regBody))
+	req, _ := http.NewRequest("POST", testEndpoint("/api/auth/register"), bytes.NewBuffer(regBody))
 	req.Header.Set("Content-Type", "application/json")
 	ta.App.Test(req)
 
 	loginDto := models.AuthUserDTO{Identifier: email, Password: password}
 	loginBody, _ := json.Marshal(loginDto)
-	req, _ = http.NewRequest("POST", "/api/auth/login", bytes.NewBuffer(loginBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/auth/login"), bytes.NewBuffer(loginBody))
 	req.Header.Set("Content-Type", "application/json")
-	resp, _ := ta.App.Test(req)
+	resp, err := ta.App.Test(req)
+	if err != nil {
+		panic(err)
+	}
 	var loginResult map[string]string
 	json.NewDecoder(resp.Body).Decode(&loginResult)
 	token := loginResult["token"]
@@ -46,7 +49,7 @@ func TestAttemptsHandlers(t *testing.T) {
 	// Create a task
 	taskDto := models.CreateTaskDTO{Title: "Test Task for Attempt"}
 	taskBody, _ := json.Marshal(taskDto)
-	req, _ = http.NewRequest("POST", "/api/tasks/", bytes.NewBuffer(taskBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/tasks/"), bytes.NewBuffer(taskBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, _ = ta.App.Test(req)
@@ -57,7 +60,7 @@ func TestAttemptsHandlers(t *testing.T) {
 	// Create a test case (required by NewAttempt)
 	tcDto := models.NewTestCaseReq{TaskID: taskID}
 	tcBody, _ := json.Marshal(tcDto)
-	req, _ = http.NewRequest("POST", "/api/test-cases/", bytes.NewBuffer(tcBody))
+	req, _ = http.NewRequest("POST", testEndpoint("/api/test-cases/"), bytes.NewBuffer(tcBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	ta.App.Test(req)
@@ -69,7 +72,7 @@ func TestAttemptsHandlers(t *testing.T) {
 			Code:     "print('hello')",
 		}
 		body, _ := json.Marshal(dto)
-		req, _ := http.NewRequest("POST", "/api/attempts/", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("POST", testEndpoint("/api/attempts/"), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -79,7 +82,7 @@ func TestAttemptsHandlers(t *testing.T) {
 	})
 
 	t.Run("GetAttempts", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/attempts/?taskId=%d", taskID), nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf(testEndpoint("/api/attempts/?taskId=%d"), taskID), nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		resp, err := ta.App.Test(req)

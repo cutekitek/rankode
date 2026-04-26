@@ -2,6 +2,7 @@ package files
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"rankode/internal/config"
@@ -16,24 +17,49 @@ type FileStorage struct {
 
 type GetFileParams struct {
 	Bucket string
-	Name string
+	Name   string
 }
 
 type UploadFileParams struct {
 	Bucket string
-	Name string
-	File io.Reader
-	Size int64
+	Name   string
+	File   io.Reader
+	Size   int64
 }
 
 func NewFileStorage(cfg *config.Config) *FileStorage {
-	client, err := minio.New(cfg.MinIOHost, &minio.Options{
-		Creds: credentials.NewStaticV4(cfg.MinIOLogin, cfg.MinIOPassword, ""),
+	client, err := minio.New(cfg.S3Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.S3AccessKey, cfg.S3SecretKey, ""),
+		Secure: false,
 	})
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
-	return &FileStorage{cl: client} 
+	return &FileStorage{cl: client}
+}
+
+func (s *FileStorage) EnsureBucket(ctx context.Context, bucket string) error {
+	exists, err := s.cl.BucketExists(ctx, bucket)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	err = s.cl.MakeBucket(ctx, bucket, minio.MakeBucketOptions{})
+	if err == nil {
+		return nil
+	}
+
+	exists, existsErr := s.cl.BucketExists(ctx, bucket)
+	if existsErr == nil && exists {
+		return nil
+	}
+	if existsErr != nil {
+		return errors.Join(err, existsErr)
+	}
+	return err
 }
 
 func (s *FileStorage) UploadFile(ctx context.Context, params UploadFileParams) error {

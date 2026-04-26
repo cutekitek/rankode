@@ -25,18 +25,16 @@ func NewAttemptsHandler(service *attempts.AttemptsService) *attemptsHandler {
 }
 
 func (h *attemptsHandler) RegisterRoutes(app fiber.Router, authMiddleware fiber.Handler) {
-	attemptsGroup := app.Group("/attempts")
+	attemptsGroup := app.Group("/attempts").Use(authMiddleware)
 
 	attemptsGroup.Post(
 		"/",
 		middleware.WrapJson(h.CreateAttemptHandler),
-		authMiddleware,
 	)
 
 	attemptsGroup.Get(
 		"/",
 		h.GetUserTaskAttemptsHandler,
-		authMiddleware,
 	)
 }
 
