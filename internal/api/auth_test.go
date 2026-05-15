@@ -54,8 +54,9 @@ func TestAuthHandlers(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var result map[string]string
+		var result map[string]interface{}
 		json.NewDecoder(resp.Body).Decode(&result)
 		assert.Contains(t, result, "token")
+		assert.Contains(t, result, "user")
 	})
 }

@@ -73,21 +73,33 @@ func (h *gradesHandler) ListGradesHandler(c fiber.Ctx) error {
 	assignmentIDStr := c.Query("assignment_id")
 	courseIDStr := c.Query("course_id")
 	studentIDStr := c.Query("student_id")
+	currentUserID := *middleware.UserIDFromContext(c)
 
-	// If student_id provided, verify teacher permission
+	targetStudentID := currentUserID
 	if studentIDStr != "" {
-		// For simplicity, we'll assume teachers can view any student's grades
-		// In production, verify teacher is teacher of the course
 		studentID, err := strconv.Atoi(studentIDStr)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid student ID format"})
 		}
+
+		canViewAll, err := h.service.CanViewAllGrades(c.Context(), currentUserID)
+		if err != nil {
+			return apierror.CheckApiErrorAndSend(err, c)
+		}
+		if int32(studentID) != currentUserID && !canViewAll {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Forbidden"})
+		}
+
+		targetStudentID = int32(studentID)
+	}
+
+	if studentIDStr != "" {
 		if assignmentIDStr != "" {
 			assignmentID, err := strconv.Atoi(assignmentIDStr)
 			if err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid assignment ID format"})
 			}
-			grades, err := h.service.GetStudentGradesForAssignment(c.Context(), int32(assignmentID), int32(studentID))
+			grades, err := h.service.GetStudentGradesForAssignment(c.Context(), int32(assignmentID), targetStudentID)
 			if err != nil {
 				return apierror.CheckApiErrorAndSend(err, c)
 			}
@@ -97,13 +109,18 @@ func (h *gradesHandler) ListGradesHandler(c fiber.Ctx) error {
 			if err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid course ID format"})
 			}
-			grades, err := h.service.GetStudentGradesForCourse(c.Context(), int32(courseID), int32(studentID))
+			grades, err := h.service.GetStudentGradesForCourse(c.Context(), int32(courseID), targetStudentID)
 			if err != nil {
 				return apierror.CheckApiErrorAndSend(err, c)
 			}
 			return c.JSON(grades)
 		}
-		// No filter, fall through
+
+		grades, err := h.service.GetStudentGrades(c.Context(), targetStudentID)
+		if err != nil {
+			return apierror.CheckApiErrorAndSend(err, c)
+		}
+		return c.JSON(grades)
 	}
 
 	if assignmentIDStr != "" {
@@ -111,18 +128,42 @@ func (h *gradesHandler) ListGradesHandler(c fiber.Ctx) error {
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid assignment ID format"})
 		}
-		// Teacher view all grades for assignment
-		grades, err := h.service.GetGradesForAssignment(c.Context(), int32(assignmentID))
+		canViewAll, err := h.service.CanViewAllGrades(c.Context(), currentUserID)
+		if err != nil {
+			return apierror.CheckApiErrorAndSend(err, c)
+		}
+		if canViewAll {
+			grades, err := h.service.GetGradesForAssignment(c.Context(), int32(assignmentID))
+			if err != nil {
+				return apierror.CheckApiErrorAndSend(err, c)
+			}
+			return c.JSON(grades)
+		}
+
+		grades, err := h.service.GetStudentGradesForAssignment(c.Context(), int32(assignmentID), currentUserID)
 		if err != nil {
 			return apierror.CheckApiErrorAndSend(err, c)
 		}
 		return c.JSON(grades)
 	}
 
-	// Default: return current user's grades across all courses
-	// This is a simplified implementation
-	// In reality, we'd need a more complex query
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{"error": "Not implemented"})
+	if courseIDStr != "" {
+		courseID, err := strconv.Atoi(courseIDStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid course ID format"})
+		}
+		grades, err := h.service.GetStudentGradesForCourse(c.Context(), int32(courseID), currentUserID)
+		if err != nil {
+			return apierror.CheckApiErrorAndSend(err, c)
+		}
+		return c.JSON(grades)
+	}
+
+	grades, err := h.service.GetStudentGrades(c.Context(), currentUserID)
+	if err != nil {
+		return apierror.CheckApiErrorAndSend(err, c)
+	}
+	return c.JSON(grades)
 }
 
 // GetGradeStatsHandler godoc

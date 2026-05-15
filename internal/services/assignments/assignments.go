@@ -144,6 +144,9 @@ func (s *AssignmentService) ListAssignmentsByCourse(ctx context.Context, courseI
 	if err != nil {
 		return nil, apierror.WrapErrorApi(err, 500)
 	}
+	if assignments == nil {
+		assignments = make([]db.Assignment, 0)
+	}
 	return assignments, nil
 }
 
@@ -151,6 +154,9 @@ func (s *AssignmentService) ListAssignmentsForStudent(ctx context.Context, stude
 	assignments, err := s.q.ListAssignmentsForStudent(ctx, studentID)
 	if err != nil {
 		return nil, apierror.WrapErrorApi(err, 500)
+	}
+	if assignments == nil {
+		assignments = make([]db.Assignment, 0)
 	}
 	return assignments, nil
 }

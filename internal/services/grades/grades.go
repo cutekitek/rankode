@@ -202,6 +202,44 @@ func (s *GradeService) GetStudentGradesForCourse(ctx context.Context, courseID, 
 	return grades, nil
 }
 
+func (s *GradeService) GetStudentGrades(ctx context.Context, studentID int32) ([]models.GradeResponse, error) {
+	rows, err := s.q.GetStudentGrades(ctx, studentID)
+	if err != nil {
+		return nil, apierror.WrapErrorApi(err, 500)
+	}
+
+	grades := make([]models.GradeResponse, 0, len(rows))
+	for _, row := range rows {
+		grade := db.Grade{
+			ID:           row.ID,
+			AssignmentID: row.AssignmentID,
+			TaskID:       row.TaskID,
+			UserID:       row.UserID,
+			Grade:        row.Grade,
+			Feedback:     row.Feedback,
+			GradedBy:     row.GradedBy,
+			GradedAt:     row.GradedAt,
+		}
+		response := models.GradeResponse{
+			Grade:           grade,
+			AssignmentTitle: row.AssignmentTitle,
+			TaskTitle:       row.TaskTitle,
+		}
+		grades = append(grades, response)
+	}
+
+	return grades, nil
+}
+
+func (s *GradeService) CanViewAllGrades(ctx context.Context, userID int32) (bool, error) {
+	user, err := s.q.GetUserById(ctx, userID)
+	if err != nil {
+		return false, apierror.WrapErrorApi(err, 500)
+	}
+
+	return user.Roles == 2 || user.Roles == 3, nil
+}
+
 func (s *GradeService) DeleteGrade(ctx context.Context, gradeID, teacherID int32) error {
 	// Get grade to find assignment
 	// We need a query to get grade by ID (not available)

@@ -90,6 +90,9 @@ func (s *CourseService) ListCoursesByTeacher(ctx context.Context, teacherID int3
 	if err != nil {
 		return nil, apierror.WrapErrorApi(err, 500)
 	}
+	if courses == nil {
+		courses = make([]db.Course, 0)
+	}
 	return courses, nil
 }
 
@@ -97,6 +100,9 @@ func (s *CourseService) ListCoursesForStudent(ctx context.Context, studentID int
 	courses, err := s.q.ListCoursesForStudent(ctx, studentID)
 	if err != nil {
 		return nil, apierror.WrapErrorApi(err, 500)
+	}
+	if courses == nil {
+		courses = make([]db.Course, 0)
 	}
 	return courses, nil
 }

@@ -78,5 +78,6 @@ func (h *authHandler) AuthenticateHandler(c fiber.Ctx, dto models.AuthUserDTO) e
 	fmt.Println("auth")
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"token": token,
+		"user":  user,
 	})
 }

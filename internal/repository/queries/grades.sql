@@ -31,6 +31,14 @@ JOIN tasks t ON g.task_id = t.id
 WHERE a.course_id = $1 AND g.user_id = $2
 ORDER BY a.due_date, t.title;
 
+-- name: GetStudentGrades :many
+SELECT g.*, a.title as assignment_title, t.title as task_title
+FROM grades g
+JOIN assignments a ON g.assignment_id = a.id
+JOIN tasks t ON g.task_id = t.id
+WHERE g.user_id = $1
+ORDER BY a.due_date, t.title;
+
 -- name: DeleteGrade :exec
 DELETE FROM grades WHERE id = $1;
 

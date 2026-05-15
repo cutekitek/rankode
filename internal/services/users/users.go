@@ -32,12 +32,19 @@ func (s *UserService) Register(ctx context.Context, dto models.CreateUserDTO) (d
 		Username:     dto.Username,
 		Email:        dto.Email,
 		PasswordHash: string(hashedPassword),
-		Elo:          0,                    
+		Elo:          0,
 	}
 
 	user, err := s.q.NewUser(ctx, params)
 	if err != nil {
 		return db.User{}, err
+	}
+
+	if dto.Roles != 0 {
+		if err := s.q.UpdateUserRole(ctx, db.UpdateUserRoleParams{ID: user.ID, Roles: dto.Roles}); err != nil {
+			return db.User{}, err
+		}
+		user.Roles = dto.Roles
 	}
 
 	return user, nil

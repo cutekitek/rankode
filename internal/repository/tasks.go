@@ -1,11 +1,15 @@
 package db
 
 import (
-	"fmt"
-
 	sq "github.com/Masterminds/squirrel"
 	"golang.org/x/net/context"
 )
+
+var taskSortColumns = map[string]string{
+	"name":       "title",
+	"difficulty": "difficulty",
+	"score":      "score",
+}
 
 func (q *Queries) GetTaskListByFilter(ctx context.Context, filter TaskListFilter) ([]Task, error) {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
@@ -15,7 +19,9 @@ func (q *Queries) GetTaskListByFilter(ctx context.Context, filter TaskListFilter
 		query = query.Where(sq.Eq{"difficulty": filter.Difficulties})
 	}
 	if filter.SortBy != nil {
-		query = query.OrderBy(*filter.SortBy)
+		if column, ok := taskSortColumns[*filter.SortBy]; ok {
+			query = query.OrderBy(column)
+		}
 	}
 	if filter.TopicIDs != nil {
 		query = query.Where("topics @> ?", filter.TopicIDs)
@@ -33,7 +39,6 @@ func (q *Queries) GetTaskListByFilter(ctx context.Context, filter TaskListFilter
 		query = query.Where(sq.Eq{"user_id": *filter.UserID})
 	}
 	sql, args, err := query.ToSql()
-	fmt.Println(sql, args)
 	if err != nil {
 		return nil, err
 	}

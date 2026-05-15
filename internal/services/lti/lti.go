@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"rankode/internal/config"
+	"rankode/internal/models"
 	db "rankode/internal/repository"
 	"rankode/internal/services/users"
 	"strings"
@@ -195,22 +196,6 @@ func (s *LtiService) ProvisionUser(ctx context.Context, claims *LtiClaims) (db.U
 	// Create user
 	// We use a dummy password since it's LTI-only
 	password := fmt.Sprintf("lti_%d", time.Now().UnixNano())
-
-	user, err := s.usersService.Register(ctx, struct {
-		Username string `json:"username" validate:"required"`
-		Email    string `json:"email"    validate:"required,email"`
-		Password string `json:"password" validate:"required,min=8"`
-	}{
-		Username: username,
-		Email:    claims.Email,
-		Password: password,
-	})
-
-	if err != nil {
-		return db.User{}, err
-	}
-
-	// 3. Set role if instructor
 	isInstructor := false
 	for _, role := range claims.Roles {
 		if role == LtiRoleInstructor {
@@ -218,16 +203,20 @@ func (s *LtiService) ProvisionUser(ctx context.Context, claims *LtiClaims) (db.U
 			break
 		}
 	}
-
+	role := int32(0)
 	if isInstructor {
-		err = s.q.UpdateUserRole(ctx, db.UpdateUserRoleParams{
-			Roles: 3, // Teacher
-			ID:    user.ID,
-		})
-		if err != nil {
-			return db.User{}, err
-		}
-		user.Roles = 3
+		role = 3
+	}
+
+	user, err := s.usersService.Register(ctx, models.CreateUserDTO{
+		Username: username,
+		Email:    claims.Email,
+		Password: password,
+		Roles:    role,
+	})
+
+	if err != nil {
+		return db.User{}, err
 	}
 
 	// 4. Create LTI link
