@@ -50,6 +50,7 @@ func (h *topicsHandler) ListTopicsHandler(c fiber.Ctx, dto models.ListTopicsDTO)
 // @Tags Topics
 // @Accept json
 // @Produce json
+// @Param topic body models.AddTopicDTO true "Topic payload"
 // @Success 200 {object} db.Topic "Created Topic"
 // @Failure 400 {object} apierror.ApiError "Bad request (e.g., invalid query parameters)"
 // @Failure 401 {object} apierror.ApiError "Unauthorized"

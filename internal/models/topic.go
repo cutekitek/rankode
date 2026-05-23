@@ -5,5 +5,5 @@ type ListTopicsDTO struct {
 }
 
 type AddTopicDTO struct {
-	Name string `query:"name"`
+	Name string `json:"name" query:"name"`
 }

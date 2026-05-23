@@ -25,7 +25,6 @@ type Querier interface {
 	CreateAttempt(ctx context.Context, arg CreateAttemptParams) (Attempt, error)
 	CreateCourse(ctx context.Context, arg CreateCourseParams) (Course, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
-	CreateLtiLink(ctx context.Context, arg CreateLtiLinkParams) error
 	CreateOrUpdateGrade(ctx context.Context, arg CreateOrUpdateGradeParams) (Grade, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateTaskTestCase(ctx context.Context, arg CreateTaskTestCaseParams) (TaskTestCase, error)
@@ -51,7 +50,8 @@ type Querier interface {
 	GetGradesForAssignment(ctx context.Context, assignmentID int32) ([]GetGradesForAssignmentRow, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupsForStudent(ctx context.Context, arg GetGroupsForStudentParams) ([]Group, error)
-	GetLtiUser(ctx context.Context, arg GetLtiUserParams) (LtiUser, error)
+	GetOidcIdentity(ctx context.Context, arg GetOidcIdentityParams) (OidcIdentity, error)
+	GetOidcProvider(ctx context.Context, name string) (OidcProvider, error)
 	GetStudentGrades(ctx context.Context, userID int32) ([]GetStudentGradesRow, error)
 	GetStudentGradesForAssignment(ctx context.Context, arg GetStudentGradesForAssignmentParams) ([]GetStudentGradesForAssignmentRow, error)
 	GetStudentGradesForCourse(ctx context.Context, arg GetStudentGradesForCourseParams) ([]GetStudentGradesForCourseRow, error)
@@ -93,6 +93,8 @@ type Querier interface {
 	UpdateTaskVerificationFile(ctx context.Context, arg UpdateTaskVerificationFileParams) error
 	UpdateTopicsCounters(ctx context.Context, arg UpdateTopicsCountersParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
+	UpsertOidcIdentity(ctx context.Context, arg UpsertOidcIdentityParams) (OidcIdentity, error)
+	UpsertOidcProvider(ctx context.Context, arg UpsertOidcProviderParams) (OidcProvider, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"rankode/internal/config"
 	"rankode/internal/middleware"
 	"rankode/internal/models"
@@ -16,6 +17,7 @@ import (
 	"rankode/internal/services/tasks"
 	"rankode/internal/services/test_cases"
 	"rankode/internal/services/users"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -38,24 +40,43 @@ type testApp struct {
 }
 
 func setupTestApp(ctx context.Context) (*testApp, error) {
+	setupCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	cfg := &config.Config{
-		PostgresString: "postgres://rankode:fobeagTB8Ojo3R@localhost:5432/rankode?sslmode=disable",
+		PostgresString: "postgres://rankode:fobeagTB8Ojo3R@127.0.0.1:5432/rankode?sslmode=disable",
 		JWTSecret:      "test_secret",
 		S3Endpoint:     "localhost:8333",
 		S3AccessKey:    "tasks",
 		S3SecretKey:    "fobeagTB8Ojo3R",
 	}
 
-	pgPool, err := pgxpool.New(ctx, cfg.PostgresString)
+	pgConfig, err := pgxpool.ParseConfig(cfg.PostgresString)
 	if err != nil {
 		return nil, err
 	}
+	pgConfig.ConnConfig.ConnectTimeout = 2 * time.Second
 
-	// Seed languages
-	pgPool.Exec(ctx, "INSERT INTO languages (name) VALUES ('python'), ('go'), ('cpp'), ('java') ON CONFLICT DO NOTHING")
-	// Seed a topic
-	pgPool.Exec(ctx, "INSERT INTO topics (name) VALUES ('General') ON CONFLICT DO NOTHING")
-	pgPool.Exec(ctx, "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS verification_file TEXT")
+	pgPool, err := pgxpool.NewWithConfig(setupCtx, pgConfig)
+	if err != nil {
+		return nil, err
+	}
+	if err := pgPool.Ping(setupCtx); err != nil {
+		pgPool.Close()
+		return nil, fmt.Errorf("failed to connect to test postgres: %w", err)
+	}
+
+	seedStatements := []string{
+		"INSERT INTO languages (name) VALUES ('python'), ('go'), ('cpp'), ('java') ON CONFLICT DO NOTHING",
+		"INSERT INTO topics (name) VALUES ('General') ON CONFLICT DO NOTHING",
+		"ALTER TABLE tasks ADD COLUMN IF NOT EXISTS verification_file TEXT",
+	}
+	for _, stmt := range seedStatements {
+		if _, err := pgPool.Exec(setupCtx, stmt); err != nil {
+			pgPool.Close()
+			return nil, fmt.Errorf("failed to prepare test database: %w", err)
+		}
+	}
 
 	execer := db.New(pgPool)
 	fileStorage := files.NewFileStorage(cfg)

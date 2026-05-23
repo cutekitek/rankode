@@ -20,11 +20,7 @@ type Config struct {
 	RabbitMQPassword string `env:"RABBIT_PASSWORD" env-required:"true"`
 	ListenAddr       string `env:"LISTEN_ADDR" env-default:"0.0.0.0:4000"`
 	JWTSecret        string `env:"JWT_SECRET"`
-	LTIIssuer        string `env:"LTI_ISSUER"`
-	LTIAuthURL       string `env:"LTI_AUTH_URL"`
-	LTITokenURL      string `env:"LTI_TOKEN_URL"`
-	LTIJWKSURL       string `env:"LTI_JWKS_URL"`
-	LTIClientID      string `env:"LTI_CLIENT_ID"`
+	OIDCCookieSecure bool   `env:"OIDC_COOKIE_SECURE" env-default:"false"`
 }
 
 func NewConfig() (*Config, error) {

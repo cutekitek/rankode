@@ -87,13 +87,32 @@ type Language struct {
 	Name string `json:"name"`
 }
 
-type LtiUser struct {
-	ID              int32            `json:"id"`
-	UserID          int32            `json:"user_id"`
-	LtiSubject      string           `json:"lti_subject"`
-	LtiIssuer       string           `json:"lti_issuer"`
-	LtiDeploymentID pgtype.Text      `json:"lti_deployment_id"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
+type OidcIdentity struct {
+	ID            int32            `json:"id"`
+	UserID        int32            `json:"user_id"`
+	ProviderName  string           `json:"provider_name"`
+	Subject       string           `json:"subject"`
+	Email         pgtype.Text      `json:"email"`
+	EmailVerified bool             `json:"email_verified"`
+	CreatedAt     pgtype.Timestamp `json:"created_at"`
+	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
+}
+
+type OidcProvider struct {
+	Name                 string           `json:"name"`
+	Issuer               string           `json:"issuer"`
+	ClientID             string           `json:"client_id"`
+	ClientSecret         pgtype.Text      `json:"client_secret"`
+	AuthUrl              string           `json:"auth_url"`
+	TokenUrl             string           `json:"token_url"`
+	JwksUrl              string           `json:"jwks_url"`
+	RedirectUrl          string           `json:"redirect_url"`
+	FrontendRedirectUrl  string           `json:"frontend_redirect_url"`
+	Scopes               []string         `json:"scopes"`
+	AllowedDomains       []string         `json:"allowed_domains"`
+	RequireEmailVerified bool             `json:"require_email_verified"`
+	CreatedAt            pgtype.Timestamp `json:"created_at"`
+	UpdatedAt            pgtype.Timestamp `json:"updated_at"`
 }
 
 type Task struct {
